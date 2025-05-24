@@ -6,11 +6,8 @@ export const getUserAvatar = async (userId) => {
     if (!userId) {
       throw new Error('User ID is required');
     }
-
     const avatarRef = ref(storage, `avatars/${userId}`);
-
     const avatarUrl = await getDownloadURL(avatarRef);
-    
     return avatarUrl;
   } catch (error) {
     console.error('Ошибка получения аватара:', error);

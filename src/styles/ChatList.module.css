@@ -1,0 +1,207 @@
+.chatListContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: white;
+  position: relative;
+}
+
+.resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: transparent;
+  z-index: 10;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 20px;
+  width: 20px;
+  height: 12px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+
+.bar {
+  height: 2px;
+  background-color: grey;
+  border-radius: 5px;
+  transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
+}
+
+.hamburger:hover .bar {
+  background-color: #0088cc;
+}
+
+.hamburger:hover {
+  transform: scale(1.1);
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 90%;
+  margin: 5px 30px;
+  background-color: #f5f5f5;
+  border-radius: 50px;
+  padding: 13px 16px 13px 55px;
+  color: #888;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.searchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 25px;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.searchWrapper:focus-within {
+  outline: 2px solid #0088cc;
+}
+
+.searchWrapper:focus-within .searchIcon {
+  color: #0088cc;
+}
+
+
+.menu {
+  position: absolute;
+  top: 60px;
+  left: 10;
+  background-color: hsla(0, 0%, 100%, 0.73);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: #f0f0f0;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.avatarMenu {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatarMenu:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.chatItem:hover {
+  background: #f0f0f0;
+}
+.chatItem:focus{
+  background-color: #0088cc;
+}
+
+.chatInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.chatName {
+  font-weight: 500;
+}
+
+.loadingText {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  color: #888;
+}
+
+ 
+
+.profileSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.displayName {
+  font-weight: 500;
+  font-size: 16px;
+  color: #333;
+}
+.profileInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.googleAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.selectedUsers {
+  padding: 0.5rem 1rem;
+  background-color: var(--light-gray);
+  border-bottom: 1px solid #ccc;
+  font-size: 0.9rem;
+  color: #333;
+}

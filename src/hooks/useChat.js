@@ -49,13 +49,7 @@ export function useChats() {
     }
   };
 
-  return {
-    chats,
-    loading,
-    createChat,
-    editChat,
-    removeChat,
-  };
+  return { chats, loading, createChat, editChat, removeChat, };
 }
 
 export function useChatById(chatId) {
@@ -77,8 +71,5 @@ export function useChatById(chatId) {
     fetchChat();
   }, [chatId]);
 
-  return {
-    chat,
-    loading,
-  };
+  return { chat, loading, };
 }

@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   user: null,
-  avatar: null,
+  loading: true,
 };
 
 export const userSlice = createSlice({
@@ -12,15 +12,19 @@ export const userSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
     },
-    setAvatar: (state, action) => {
-      state.avatar = action.payload;
+    updateUserProfile: (state, action) => {
+      if (state.user) {
+        const { displayName, photoURL, bio } = action.payload;
+        state.user.displayName = displayName ?? state.user.displayName;
+        state.user.photoURL = photoURL ?? state.user.photoURL;
+        state.user.bio = bio ?? state.user.bio;
+      }
     },
     logout: (state) => {
       state.user = null;
-      state.avatar = null;
     },
   },
 });
 
-export const { setUser, setAvatar, logout } = userSlice.actions;
+export const { setUser, updateUserProfile, logout } = userSlice.actions;
 export default userSlice.reducer;

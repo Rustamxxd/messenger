@@ -1,11 +1,28 @@
-import getAvatarUrl from "@/utils/getAvatar";
+import React from "react";
+import multiavatar from "@multiavatar/multiavatar";
 
-const UserAvatar = ({ username }) => {
+const UserAvatar = ({ user, size = 45 }) => {
+  if (user?.photoURL) {
+    return (
+      <img
+        src={user.photoURL}
+        alt="Аватар"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          objectFit: "cover",
+        }}
+      />
+    );
+  }
+
   return (
-    <img
-      src={getAvatarUrl(username)}
-      alt="User Avatar"
-      className="w-12 h-12 rounded-full"
+    <div
+      style={{ width: size, height: size }}
+      dangerouslySetInnerHTML={{
+        __html: multiavatar(user?.displayName || "Пользователь"),
+      }}
     />
   );
 };

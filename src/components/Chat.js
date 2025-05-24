@@ -1,34 +1,41 @@
+"use client";
+
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { clearUser } from '../app/store/userSlice';
+import { logout } from '../app/store/userSlice';
 import { logoutUser } from '../lib/firebase';
 import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
-import '@/styles/Chat.module.css'
+import styles from '@/styles/Chat.module.css';
 
 export default function Chat() {
-  const { user, avatar } = useSelector((state) => state.user);
+  const { user } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [selectedChat, setSelectedChat] = useState(null);
 
   const handleLogout = async () => {
     await logoutUser();
-    dispatch(clearUser());
+    dispatch(logout());
     window.location.reload();
   };
 
   return (
-    <div>
-      <div>
+    <div className={styles.chatContainer}>
+      <div className={styles.userInfo}>
         <p>{user?.displayName || user?.email}</p>
-        <button onClick={handleLogout}>Выйти</button>
-        <ChatList onSelectChat={setSelectedChat} />
+        <button onClick={handleLogout} className={styles.logoutButton}>
+          Выйти
+        </button>
       </div>
-      <div>
-        {selectedChat ? (
-          <ChatWindow chatId={selectedChat.id} />
-        ) : (
-          <p>Выберите чат</p>
-        )}
+      <div className={styles.chatSection}>
+        <ChatList onSelectChat={setSelectedChat} />
+        <div className={styles.chatWindow}>
+          {selectedChat ? (
+            <ChatWindow chatId={selectedChat.id} />
+          ) : (
+            <p>Выберите чат</p>
+          )}
+        </div>
       </div>
     </div>
   );
