@@ -7,6 +7,7 @@
   }
   
   .chatWindow {
+    background: url('https://static-www.adweek.com/wp-content/uploads/2022/07/Messenger-Our-Places-Chat-Theme-Hero.png?w=1200') no-repeat center/cover;
     flex: 1;
     display: flex;
     flex-direction: column;

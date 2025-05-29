@@ -1,7 +1,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  background: url('https://abrakadabra.fun/uploads/posts/2021-12/1640839704_2-abrakadabra-fun-p-krasivie-oboi-dlya-chata-2.jpg') no-repeat center/cover;
+  background: url('https://static-www.adweek.com/wp-content/uploads/2022/07/Messenger-Our-Places-Chat-Theme-Hero.png?w=1200') no-repeat center/cover;
   height: 100%;
 
 }
@@ -58,7 +58,7 @@
   display: flex;
   justify-content: center;
   padding: 8px;
-  border: 1px solid #ccc;
+  background: #f9f9f9;
   border-radius: 8px;
   outline: none;
   resize: none;
@@ -73,25 +73,25 @@
 }
 
 .sendButton {
-  margin-left: 8px;
-  padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 25px;
+  background-color: #f9f9f9;
+  color: #2563eb;
   cursor: pointer;
-  transition: background-color 0.3s;
-  user-select: none;
+  transition: 0.2s ease-in-out;
 }
 
 .sendButton:hover {
   background-color: #2563eb;
+  color: #f9f9f9;
 }
 
-.sendButton:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
+
 
 .typingStatus {
   font-size: 13px;

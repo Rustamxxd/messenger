@@ -18,8 +18,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-
 export { auth, db, storage };
+
 export const registerUser = async (email, password, displayName) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
@@ -67,7 +67,6 @@ export const updateUserProfile = async (userId, updates, currentUser = auth.curr
   }
 };
 
-
 export const getUserProfile = async (userId) => {
   const userRef = doc(db, "users", userId);
   const userSnapshot = await getDoc(userRef);
@@ -75,42 +74,31 @@ export const getUserProfile = async (userId) => {
 };
 
 export const uploadAvatar = async (file) => {
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error("Пользователь не авторизован");
+  const currentUser = auth.currentUser;
+  if (!currentUser) throw new Error("Пользователь не авторизован");
 
-    const fileExt = file.name.split(".").pop();
-    const filePath = `avatars/${currentUser.uid}.${fileExt}`;
-    const storageRef = ref(storage, filePath);
+  const fileExt = file.name.split(".").pop();
+  const filePath = `avatars/${currentUser.uid}.${fileExt}`;
+  const storageRef = ref(storage, filePath);
 
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-    console.log("Download URL:", downloadURL);
-    return downloadURL;
-  } catch (error) {
-    console.error("Ошибка загрузки аватара:", error);
-    throw error;
-  }
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
+
+  return downloadURL;
 };
-
 
 export const createOrGetChat = async (userId1, userId2) => {
   const chatsRef = collection(db, "chats");
 
-  const q = query(
-    chatsRef,
-    where("participants", "in", [
-      [userId1, userId2],
-      [userId2, userId1],
-    ])
-  );
-
+  const q = query(chatsRef, where("participants", "array-contains", userId1));
   const querySnapshot = await getDocs(q);
 
-  if (!querySnapshot.empty) {
-    return querySnapshot.docs[0].id;
-  }
+  const chatDoc = querySnapshot.docs.find(doc => {
+    const participants = doc.data().participants || [];
+    return participants.includes(userId2) && participants.length === 2;
+  });
 
+  if (chatDoc) return chatDoc.id;
   const newChatRef = await addDoc(chatsRef, {
     participants: [userId1, userId2],
     createdAt: Date.now(),
@@ -119,7 +107,13 @@ export const createOrGetChat = async (userId1, userId2) => {
   return newChatRef.id;
 };
 
-export const getFirestoreApiUrl = () => {
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
-};  
+export const getChatsForUser = async (userId) => {
+  const chatsRef = collection(db, "chats");
+  const q = query(chatsRef, where("participants", "array-contains", userId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};

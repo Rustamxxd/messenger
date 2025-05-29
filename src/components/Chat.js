@@ -6,7 +6,7 @@ import { logout } from '../app/store/userSlice';
 import { logoutUser } from '../lib/firebase';
 import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
-import styles from '@/styles/Chat.module.css';
+import styles from '@/styles/ChatPage.module.css';
 
 export default function Chat() {
   const { user } = useSelector((state) => state.user);

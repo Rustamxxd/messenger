@@ -3,21 +3,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { db } from "@/lib/firebase";
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  addDoc,
-  serverTimestamp,
-  doc,
-  setDoc,
-  deleteDoc,
-  getDoc,
-} from "firebase/firestore";
+import {collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import Message from "./Message";
 import UserAvatar from "./UserAvatar";
 import styles from "@/styles/ChatWindow.module.css";
+import { IoSend } from "react-icons/io5";
 
 const setTypingStatus = async (chatId, uid, name, isTyping) => {
   if (!chatId || !uid) return;
@@ -175,7 +165,7 @@ const ChatWindow = ({ chatId }) => {
           rows={1}
         />
         <button className={styles.sendButton} onClick={sendMessage}>
-          Отправить
+          <IoSend />
         </button>
       </div>
     </div>

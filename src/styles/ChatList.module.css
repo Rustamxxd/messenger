@@ -121,46 +121,54 @@
 .avatar {
   width: 60px;
   height: 60px;
+  margin-right: 12px;
   border-radius: 50%;
-}
-
-.avatarMenu {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.avatarMenu:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
 }
 
 .chatItem {
   display: flex;
   align-items: center;
-  gap: 12px;
+  
   padding: 10px;
-  border-radius: 8px;
   cursor: pointer;
 }
 
 .chatItem:hover {
-  background: #f0f0f0;
-}
-.chatItem:focus{
-  background-color: #0088cc;
-}
-
-.chatInfo {
-  display: flex;
-  flex-direction: column;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .chatName {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.lastMessage {
+  font-size: 13px;
+  color: gray;
+}
+
+.chatTime {
+  font-size: 0.75rem;
+  color: #999;
+  white-space: nowrap;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+.unreadBadge {
+  background-color: #007bff;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+}
+
+.chatUnread {
+  background-color: #f0f8ff;
+  font-weight: bold;
 }
 
 .loadingText {
@@ -169,8 +177,6 @@
   justify-content: center;
   color: #888;
 }
-
- 
 
 .profileSection {
   display: flex;
@@ -181,27 +187,57 @@
 }
 
 .displayName {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 16px;
   color: #333;
 }
+
 .profileInfo {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.googleAvatar {
-  width: 40px;
-  height: 40px;
+.continueButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: 50%;
-  object-fit: cover;
+  width: 60px;
+  height: 60px;
+  font-size: 33px;
+  background-color: #0088cc;
+  color: white;
+  cursor: pointer;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  transition: 0.2s ease-in-out;
 }
 
-.selectedUsers {
-  padding: 0.5rem 1rem;
-  background-color: var(--light-gray);
-  border-bottom: 1px solid #ccc;
-  font-size: 0.9rem;
-  color: #333;
+.continueButton:hover {
+  transform: scale(1.1);
+}
+
+.checkbox {
+  transform: scale(1.3);
+}
+
+.backButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 23px;
+  background-color: #0088cc;
+  color: white;
+  cursor: pointer;
+  margin: 0  0 10px 15px;
+  transition: 0.1s ease-in-out;
+}
+
+.backButton:hover {
+  transform: scale(1.1);
 }
