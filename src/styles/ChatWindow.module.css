@@ -41,7 +41,6 @@
 }
 
 .messages {
-  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -49,47 +48,7 @@
   padding-right: 8px;
 }
 
-.inputWrapper {
-  display: flex;
-  margin-top: 8px;
-}
 
-.inputField {
-  display: flex;
-  justify-content: center;
-  padding: 8px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  outline: none;
-  resize: none;
-  font-family: inherit;
-  font-size: 14px;
-  transition: border 0.3s;
-  min-height: 36px;
-}
-
-.inputField:focus {
-  border: 2px solid #3b82f6;
-}
-
-.sendButton {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 25px;
-  background-color: #f9f9f9;
-  color: #2563eb;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
-}
-
-.sendButton:hover {
-  background-color: #2563eb;
-  color: #f9f9f9;
-}
 
 
 
@@ -135,11 +94,92 @@
   animation-delay: 0.6s;
 }
 
-@keyframes blink {
-  0%, 80%, 100% {
-    opacity: 0;
-  }
-  40% {
-    opacity: 1;
-  }
+
+.inputField {
+  display: flex;
+  width: 800px;
+  height: 60px;
+  justify-content: center;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+}
+
+.sendButton,
+.attachButton,
+.emojiButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  background-color: #f9f9f9;
+  color: #2563eb;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.sendButton:hover,
+.attachButton:hover,
+.emojiButton:hover {
+  background-color: #2563eb;
+  color: #f9f9f9;
+}
+
+.fileInput {
+  display: none;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px;
+  gap: 10px;
+  position: relative;
+}
+
+.inputField {
+  flex-grow: 1; /* чтобы поле ввода занимало доступное пространство */
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  min-height: 36px;
+  max-height: 100px;  /* Ограничиваем высоту поля ввода */
+}
+
+.sendButton,
+.attachButton,
+.emojiButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  background-color: #f9f9f9;
+  color: #2563eb;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.sendButton:hover,
+.attachButton:hover,
+.emojiButton:hover {
+  background-color: #2563eb;
+  color: #f9f9f9;
+}
+
+.fileInput {
+  display: none;
 }

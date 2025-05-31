@@ -6,21 +6,27 @@ admin.initializeApp();
 exports.updateLastMessageAndUnread = onDocumentCreated(
   "chats/{chatId}/messages/{messageId}",
   async (event) => {
-    const messageData = event.data;
+    const messageData = event.data?.data();
     const chatId = event.params.chatId;
 
+    if (!messageData || !chatId) return null;
+
     const chatRef = admin.firestore().doc(`chats/${chatId}`);
+    const chatSnap = await chatRef.get();
+    const chatData = chatSnap.data();
+    const members = chatData?.members || [];
 
     const updateData = {
       lastMessage: {
         text: messageData.text,
-        senderId: messageData.senderId,
-        createdAt: messageData.createdAt,
+        sender: messageData.sender,
+        senderName: messageData.senderName,
+        timestamp: messageData.timestamp || admin.firestore.Timestamp.now(),
       },
     };
 
-    messageData.members.forEach((uid) => {
-      if (uid !== messageData.senderId) {
+    members.forEach((uid) => {
+      if (uid !== messageData.sender) {
         updateData[`unreadCount_${uid}`] = admin.firestore.FieldValue.increment(1);
       }
     });

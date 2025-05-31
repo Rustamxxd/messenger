@@ -15,7 +15,7 @@ export function useChatList(user) {
       const key = chat.members.length > 2 ? chat.id : chatKey;
       
       if (!uniqueChatsMap.has(key) || 
-          (chat.lastMessage?.createdAt?.seconds > uniqueChatsMap.get(key).lastMessage?.createdAt?.seconds)) {
+          (chat.lastMessage?.timestamp?.seconds > uniqueChatsMap.get(key).lastMessage?.timestamp?.seconds)) {
         uniqueChatsMap.set(key, chat);
       }
     });
@@ -66,16 +66,16 @@ export function useChatList(user) {
 
               const messagesQuery = query(
                 collection(db, 'chats', chat.id, 'messages'),
-                orderBy('createdAt', 'desc'),
+                orderBy('timestamp', 'desc'),
                 limit(1)
-              );
+                );
               const messagesSnapshot = await getDocs(messagesQuery);
               const lastMessage = messagesSnapshot.docs[0]?.data();
 
               const unreadQuery = query(
                 collection(db, 'chats', chat.id, 'messages'),
                 where('read', '==', false),
-                where('senderId', '!=', user.uid)
+                where('sender', '!=', user.uid)
               );
               const unreadSnapshot = await getDocs(unreadQuery);
               const unreadCount = unreadSnapshot.size;
@@ -92,8 +92,8 @@ export function useChatList(user) {
           );
 
           enrichedChats.sort((a, b) => {
-            const aTime = a.lastMessage?.createdAt?.seconds || a.createdAt?.seconds || 0;
-            const bTime = b.lastMessage?.createdAt?.seconds || b.createdAt?.seconds || 0;
+            const aTime = a.lastMessage?.timestamp?.seconds || a.timestamp?.seconds || 0;
+            const bTime = b.lastMessage?.timestamp?.seconds || b.timestamp?.seconds || 0;
             return bTime - aTime;
           });
 
@@ -106,7 +106,6 @@ export function useChatList(user) {
         setLoading(false);
       }
     };
-
     fetchChats();
 
     return () => unsubscribe && unsubscribe();

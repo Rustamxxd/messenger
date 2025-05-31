@@ -1,13 +1,28 @@
-"use client";
-
 import { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import { db } from "@/lib/firebase";
-import {collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  setDoc,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  writeBatch,
+  where,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Message from "./Message";
 import UserAvatar from "./UserAvatar";
 import styles from "@/styles/ChatWindow.module.css";
 import { IoSend } from "react-icons/io5";
+import { MdAttachFile } from "react-icons/md";
+import EmojiPicker from "emoji-picker-react";
 
 const setTypingStatus = async (chatId, uid, name, isTyping) => {
   if (!chatId || !uid) return;
@@ -29,21 +44,42 @@ const ChatWindow = ({ chatId }) => {
   const [typingUsers, setTypingUsers] = useState([]);
   const [otherUser, setOtherUser] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
+  const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const user = useSelector((state) => state.user.user);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !user?.uid) return;
 
     const q = query(collection(db, `chats/${chatId}/messages`), orderBy("timestamp"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
 
+    const markMessagesAsRead = async () => {
+      const unreadQuery = query(
+        collection(db, `chats/${chatId}/messages`),
+        where("read", "==", false),
+        where("sender", "!=", user.uid)
+      );
+      const snapshot = await getDocs(unreadQuery);
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.forEach((doc) => {
+          batch.update(doc.ref, { read: true });
+        });
+        await batch.commit();
+      }
+    };
+
+    markMessagesAsRead();
+
     return () => unsubscribe();
-  }, [chatId]);
+  }, [chatId, user?.uid]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -95,17 +131,38 @@ const ChatWindow = ({ chatId }) => {
   }, [chatId, user?.uid]);
 
   const sendMessage = async () => {
-    if (!chatId || !newMessage.trim() || !user?.uid) return;
+    if (!chatId || (!newMessage.trim() && !file) || !user?.uid) return;
 
-    await addDoc(collection(db, `chats/${chatId}/messages`), {
-      text: newMessage.trim(),
-      originalText: newMessage,
+    const messageData = {
       sender: user.uid,
-      senderName: user.displayName || "Аноним",
+      senderName: user.displayName,
       timestamp: serverTimestamp(),
-    });
+      read: false,
+    };
+
+    if (newMessage.trim()) {
+      await addDoc(collection(db, `chats/${chatId}/messages`), {
+        ...messageData,
+        text: newMessage.trim(),
+        originalText: newMessage,
+      });
+    }
+
+    if (file) {
+      const storageRef = ref(storage, `chats/${chatId}/files/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const fileUrl = await getDownloadURL(storageRef);
+
+      await addDoc(collection(db, `chats/${chatId}/messages`), {
+        ...messageData,
+        text: fileUrl,
+        fileType,
+      });
+      setFile(null);
+    }
 
     setNewMessage("");
+    setFile(null);
     setTypingStatus(chatId, user.uid, user.displayName || "Аноним", false);
   };
 
@@ -131,6 +188,19 @@ const ChatWindow = ({ chatId }) => {
         setTypingStatus(chatId, user.uid, user.displayName || "Аноним", false);
       }, 3000);
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const fileType = file.type.split("/")[0];
+      setFile(file);
+      setFileType(fileType);
+    }
+  };
+
+  const handleEmojiClick = (emojiData) => {
+    setNewMessage(newMessage + emojiData.emoji);
   };
 
   return (
@@ -164,9 +234,52 @@ const ChatWindow = ({ chatId }) => {
           onKeyDown={handleKeyDown}
           rows={1}
         />
-        <button className={styles.sendButton} onClick={sendMessage}>
+        
+        {/* Кнопка для открытия Emoji Picker */}
+        <button
+          className={styles.emojiButton}
+          onClick={() => setShowEmojiPicker((prev) => !prev)}
+        >
+          😊
+        </button>
+
+        {/* Показываем Emoji Picker, если он активирован */}
+        {showEmojiPicker && (
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            style={{
+              position: "absolute",
+              bottom: "70px",
+              left: "10px",
+              zIndex: 1000,
+            }}
+          />
+        )}
+
+        {/* Кнопка прикрепления файла */}
+        <button
+          className={styles.attachButton}
+          onClick={() => document.querySelector('input[type="file"]').click()}
+        >
+          <MdAttachFile />
+        </button>
+
+        {/* Кнопка отправки сообщения */}
+        <button
+          className={styles.sendButton}
+          onClick={sendMessage}
+          disabled={!newMessage.trim() && !file}
+        >
           <IoSend />
         </button>
+
+        {/* Скрытый input для выбора файла */}
+        <input
+          type="file"
+          accept="image/*,audio/*,video/*"
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
       </div>
     </div>
   );

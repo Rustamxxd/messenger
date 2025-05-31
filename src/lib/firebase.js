@@ -101,7 +101,7 @@ export const createOrGetChat = async (userId1, userId2) => {
   if (chatDoc) return chatDoc.id;
   const newChatRef = await addDoc(chatsRef, {
     participants: [userId1, userId2],
-    createdAt: Date.now(),
+    timestamp: Date.now(),
   });
 
   return newChatRef.id;

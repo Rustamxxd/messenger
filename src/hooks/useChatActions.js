@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addDoc, getDocs, collection, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, getDocs, collection, updateDoc, doc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function useChatActions(user, onSelectChat) {
@@ -27,7 +27,7 @@ export function useChatActions(user, onSelectChat) {
     const docRef = await addDoc(collection(db, 'chats'), {
       name: `${user.displayName || user.email} & ${targetUser.displayName || targetUser.email}`,
       members: [user.uid, targetUser.uid],
-      createdAt: serverTimestamp(),
+      timestamp: serverTimestamp(),
     });
 
     onSelectChat({ id: docRef.id });
@@ -50,32 +50,44 @@ export function useChatActions(user, onSelectChat) {
   };
 
   const createGroupChat = async (selectedUsers, groupName) => {
-  if (selectedUsers.length < 2) {
-    alert('Выберите хотя бы двух пользователей');
-    return false;
-  }
+    try {
+      if (selectedUsers.length < 2) {
+        alert('Выберите хотя бы двух пользователей');
+        return false;
+      }
 
-  if (!groupName || groupName.trim() === '') {
-    alert('Введите название группы');
-    return false;
-  }
+      const memberIds = [user.uid, ...selectedUsers.map((u) => u.uid)];
+      const docRef = await addDoc(collection(db, 'chats'), {
+        name: groupName,
+        members: memberIds,
+        timestamp: serverTimestamp(),
+      });
 
-  try {
-    const memberIds = [user.uid, ...selectedUsers.map((u) => u.uid)];
-    const docRef = await addDoc(collection(db, 'chats'), {
-      name: groupName,
-      members: memberIds,
-      createdAt: serverTimestamp(),
-    });
+      onSelectChat({ id: docRef.id });
+      return true;
+    } catch (error) {
+      console.error('Ошибка при создании группового чата:', error);
+      return false;
+    }
+  };
 
-    onSelectChat({ id: docRef.id });
-    return true;
-  } catch (error) {
-    console.error('Ошибка при создании группового чата:', error);
-    alert('Не удалось создать группу');
-    return false;
-  }
-};
+  const handleDeleteChat = async (chatId) => {
+    const chatRef = doc(db, 'chats', chatId);
+    const chatDoc = await getDoc(chatRef);
+    const chatData = chatDoc.data();
+
+    const isLastUser = chatData.members.length === 1;
+    const isAdmin = chatData.admins?.includes(user.uid);
+
+    if (isLastUser || isAdmin) {
+      await deleteDoc(chatRef);
+      console.log(`Чат ${chatId} удален`);
+    } else {
+      const updatedMembers = chatData.members.filter((uid) => uid !== user.uid);
+      await updateDoc(chatRef, { members: updatedMembers });
+      console.log(`Пользователь ${user.uid} удален из чата ${chatId}`);
+    }
+  };
 
   return {
     selectedUsers,
@@ -84,5 +96,6 @@ export function useChatActions(user, onSelectChat) {
     createGroupChat,
     resetUnreadCount,
     toggleUser,
+    handleDeleteChat,
   };
 }
