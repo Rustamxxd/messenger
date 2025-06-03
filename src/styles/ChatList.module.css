@@ -127,10 +127,21 @@
   object-fit: cover;
 }
 
+.chatContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0 10px;
+  overflow: hidden;
+}
+
+
 .chatItem {
   display: flex;
   align-items: center;
   border-radius: 10px;
+  overflow: hidden;
   margin: 0 10px;
   padding: 10px;
   cursor: pointer;
@@ -161,6 +172,9 @@
 }
 
 .lastMessage {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 13px;
   color: gray;
 }

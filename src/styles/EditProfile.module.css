@@ -1,6 +1,8 @@
 .container {
+  display: flex;
+  flex-direction: column;
   max-width: 400px;
-  margin: 40px auto;
+  margin: 0 auto;
   padding: 20px;
   border-radius: 12px;
   background: #f9f9f9;
@@ -17,6 +19,17 @@
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
+  padding: 5px;
+  border: 1px solid green;
+  background: green;
+  color: white;
+  border-radius: 10px;
+  transition: 0.3s ease-in-out;
+}
+
+.avatarWrapper:hover {
+  background: darkgreen;
+  transform: scale(1.01);
 }
 
 .avatar {

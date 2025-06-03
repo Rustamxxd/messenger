@@ -15,12 +15,13 @@ import { Checkbox, Spin } from 'antd';
 import multiavatar from '@multiavatar/multiavatar';
 import UserAvatar from './UserAvatar';
 
-export default function ChatList({ onSelectChat, onToggleTheme, isDarkMode }) {
+export default function ChatList({ onSelectChat }) {
   const [search, setSearch] = useState('');
   const [activeChatId, setActiveChatId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState(null);
   const contextMenuRef = useRef(null);
+  const [darkMode, setDarkMode] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(450);
   const [contextMenu, setContextMenu] = useState(null);
   const user = useSelector((state) => state.user.user);
@@ -148,8 +149,8 @@ export default function ChatList({ onSelectChat, onToggleTheme, isDarkMode }) {
           >
             <FaUsers /> Создать группу
           </div>
-          <div className={styles.menuItem} onClick={onToggleTheme}>
-            {isDarkMode ? <FaSun /> : <FaMoon />} {isDarkMode ? 'Светлый режим' : 'Темный режим'}
+          <div className={`${styles.chatItem} ${darkMode ? styles.dark : ""}`} onClick={setDarkMode}>
+            {darkMode ? <FaSun /> : <FaMoon />} {darkMode ? 'Светлый режим' : 'Темный режим'}
           </div>
           <div className={styles.menuItem} onClick={() => router.push('/login')}>
             <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт

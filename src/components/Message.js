@@ -1,63 +1,75 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "@/styles/Message.module.css";
 
-const Message = ({ message, isOwn }) => {
-  const hasTranslation = message.originalText && message.originalText !== message.text;
+const Message = ({ message, isOwn, onEdit, onDelete, onReply, onContextMenu }) => {
+  const [editing, setEditing] = useState(false);
+  const [editedText, setEditedText] = useState(message.text);
 
-  const renderMessageContent = () => {
-    if (message.type === 'emoji') {
-      return <span className={styles.emoji}>{message.text}</span>;
+  const handleSave = () => {
+    if (editedText.trim() && editedText !== message.text) {
+      onEdit(editedText);
     }
+    setEditing(false);
+  };
 
-    if (message.type === 'image') {
-      return <img src={message.text} alt="message image" className={styles.messageImage} />;
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      setEditing(false);
+      setEditedText(message.text);
     }
-
-    if (message.type === 'audio') {
-      return (
-        <audio controls className={styles.messageAudio}>
-          <source src={message.text} type="audio/mp3" />
-          Your browser does not support the audio element.
-        </audio>
-      );
-    }
-
-    if (message.type === 'video') {
-      return (
-        <video controls className={styles.messageVideo}>
-          <source src={message.text} type="video/mp4" />
-          Your browser does not support the video element.
-        </video>
-      );
-    }
-
-    return <p className={styles.messageText}>{message.text}</p>;
   };
 
   const formatTime = (timestamp) => {
-    try {
-      const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp.toDate?.() || new Date();
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '';
-    }
+    if (!timestamp?.toDate) return "";
+    return new Date(timestamp.toDate()).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
-    <div className={`${styles.messageWrapper} ${isOwn ? styles.own : styles.other}`}>
-      <div
-        className={`${styles.messageBubble} ${isOwn ? styles.ownBubble : styles.otherBubble}`}
-        title={hasTranslation ? `Оригинал: ${message.originalText}` : undefined}
-      >
-        {!isOwn && <p className={styles.senderName}>{message.senderName}</p>}
-        
-        <div className={styles.messageContentWrapper}>
-          <div className={styles.messageTextContainer}>
-            {renderMessageContent()}
+    <div className={`${styles.message} ${isOwn ? styles.own : ""}`} onContextMenu={onContextMenu}>
+      <div className={styles.messageColumn}>
+        {message.replyTo && (
+          <div className={styles.reply}>
+            <div className={styles.replyText}>
+              {message.replyTo.text.length > 50
+                ? `${message.replyTo.text.substring(0, 50)}...`
+                : message.replyTo.text}
+            </div>
           </div>
-          <span className={`${styles.timestamp} ${isOwn ? styles.ownTime : styles.otherTime}`}>
-            {formatTime(message.timestamp)}
-          </span>
+        )}
+
+        <div className={styles.content}>
+          {editing ? (
+            <div className={styles.editContainer}>
+              <textarea
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                autoFocus
+                className={styles.editInput}
+              />
+              <div className={styles.editButtons}>
+                <button onClick={handleSave} className={styles.saveButton}>Сохранить</button>
+                <button onClick={() => { setEditing(false); setEditedText(message.text); }} className={styles.cancelButton}>Отмена</button>
+              </div>
+            </div>
+          ) : (
+            <p className={styles.text}>{message.text}</p>
+          )}
+
+          <div className={styles.meta}>
+            <span className={styles.time}>{formatTime(message.timestamp)}</span>
+            {isOwn && (
+              <span className={`${styles.readStatus} ${styles.inline}`}>
+                {message.read ? "✓✓" : "✓"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
