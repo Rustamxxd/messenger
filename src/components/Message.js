@@ -1,15 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "@/styles/Message.module.css";
+import VoiceMessagePlayer from "./VoiceMessagePlayer";
 
-const Message = ({ message, isOwn, onEdit, onDelete, onReply, onContextMenu }) => {
-  const [editing, setEditing] = useState(false);
+const Message = ({
+  message,
+  isOwn,
+  onContextMenu,
+  setModalMedia,
+  allMedia = [],
+  isEditing,
+  onSaveEdit,
+  onCancelEdit,
+}) => {
   const [editedText, setEditedText] = useState(message.text);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      setEditedText(message.text);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    }
+  }, [isEditing, message.text]);
 
   const handleSave = () => {
-    if (editedText.trim() && editedText !== message.text) {
-      onEdit(editedText);
+    const trimmed = editedText.trim();
+    if (trimmed && trimmed !== message.text) {
+      onSaveEdit(trimmed);
+    } else {
+      onCancelEdit();
     }
-    setEditing(false);
   };
 
   const handleKeyDown = (e) => {
@@ -17,8 +36,8 @@ const Message = ({ message, isOwn, onEdit, onDelete, onReply, onContextMenu }) =
       e.preventDefault();
       handleSave();
     } else if (e.key === "Escape") {
-      setEditing(false);
-      setEditedText(message.text);
+      e.preventDefault();
+      onCancelEdit();
     }
   };
 
@@ -31,41 +50,89 @@ const Message = ({ message, isOwn, onEdit, onDelete, onReply, onContextMenu }) =
   };
 
   return (
-    <div className={`${styles.message} ${isOwn ? styles.own : ""}`} onContextMenu={onContextMenu}>
+    <div
+      className={`${styles.message} ${isOwn ? styles.own : ""}`}
+      onContextMenu={(e) => onContextMenu(e, message)}
+    >
       <div className={styles.messageColumn}>
         {message.replyTo && (
           <div className={styles.reply}>
             <div className={styles.replyText}>
-              {message.replyTo.text.length > 50
-                ? `${message.replyTo.text.substring(0, 50)}...`
+              {message.replyTo.text?.length > 50
+                ? message.replyTo.text.slice(0, 50) + "..."
                 : message.replyTo.text}
             </div>
           </div>
         )}
 
         <div className={styles.content}>
-          {editing ? (
+          {message.deleted ? (
+            <i className={styles.deleted}>[сообщение удалено]</i>
+          ) : isEditing ? (
             <div className={styles.editContainer}>
               <textarea
+                ref={textareaRef}
                 value={editedText}
                 onChange={(e) => setEditedText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                autoFocus
                 className={styles.editInput}
               />
               <div className={styles.editButtons}>
-                <button onClick={handleSave} className={styles.saveButton}>Сохранить</button>
-                <button onClick={() => { setEditing(false); setEditedText(message.text); }} className={styles.cancelButton}>Отмена</button>
+                <button onClick={handleSave} className={styles.saveButton}>
+                  Сохранить
+                </button>
+                <button
+                  onClick={() => onCancelEdit()}
+                  className={styles.cancelButton}
+                >
+                  Отмена
+                </button>
               </div>
             </div>
           ) : (
-            <p className={styles.text}>{message.text}</p>
+            <>
+              {["image", "video"].includes(message.fileType) && (
+                <div
+                  onClick={() =>
+                    setModalMedia({
+                      files: allMedia,
+                      initialIndex: allMedia.findIndex(
+                        (m) => m.url === message.text
+                      ),
+                    })
+                  }
+                >
+                  {message.fileType === "image" && (
+                    <img src={message.text} alt="image" className="thumb" />
+                  )}
+                  {message.fileType === "video" && (
+                    <video
+                      src={message.text}
+                      className="thumb"
+                      muted
+                      playsInline
+                    />
+                  )}
+                </div>
+              )}
+
+              {message.fileType === "audio" && (
+                <VoiceMessagePlayer src={message.text} />
+              )}
+
+              {!message.fileType && (
+                <p className={styles.text}>{message.text}</p>
+              )}
+            </>
           )}
 
           <div className={styles.meta}>
-            <span className={styles.time}>{formatTime(message.timestamp)}</span>
-            {isOwn && (
-              <span className={`${styles.readStatus} ${styles.inline}`}>
+            <span className={styles.time}>
+              {formatTime(message.timestamp)}{" "}
+              {message.edited ? "(изменено)" : ""}
+            </span>
+            {isOwn && !message.deleted && (
+              <span className={styles.readStatus}>
                 {message.read ? "✓✓" : "✓"}
               </span>
             )}

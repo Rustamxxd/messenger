@@ -1,0 +1,35 @@
+.voiceWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playButton {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background-color: rgb(1, 124, 1);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 2px;
+  cursor: pointer;
+}
+
+.waveformContainer {
+  flex: 1;
+  min-width: 100px;
+  height: 40px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.timeCounter {
+  position: absolute;
+  top: 55px;
+  right: 129px;
+  font-size: 14px;
+  color: #999;
+}

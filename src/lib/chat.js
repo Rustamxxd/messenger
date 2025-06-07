@@ -20,7 +20,15 @@ export const getChat = async (chatId) => {
 
 export const addChat = async (chatData) => {
   const chatsRef = collection(db, "chats");
-  const newChatRef = await addDoc(chatsRef, chatData);
+  const isGroup =
+    Array.isArray(chatData?.participants) && chatData.participants.length > 2;
+
+  const newChatRef = await addDoc(chatsRef, {
+    ...chatData,
+    isGroup,
+    timestamp: Date.now(),
+  });
+
   return newChatRef.id;
 };
 
@@ -37,12 +45,12 @@ export const deleteChat = async (chatId) => {
 export const getChats = async () => {
   const chatsRef = collection(db, "chats");
   const querySnapshot = await getDocs(chatsRef);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
 export const getChatsForUser = async (userId) => {
   const chatsRef = collection(db, "chats");
   const q = query(chatsRef, where("participants", "array-contains", userId));
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };

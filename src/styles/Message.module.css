@@ -33,13 +33,13 @@
 }
 
 .reply {
-  background-color: #f1f0f0;
+  background: #f1f0f0c7;
+  border-left: 3px solid #008316;
   padding: 6px 10px;
-  border-left: 3px solid #aaa;
   border-radius: 8px;
-  margin-bottom: 6px;
   font-size: 13px;
   color: #555;
+  cursor: pointer;
 }
 
 .replyText {
@@ -101,3 +101,9 @@
   background-color: #e0e0e0;
   color: #333;
 }
+
+.deleted {
+  font-style: italic;
+  color: #888;
+}
+

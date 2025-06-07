@@ -94,11 +94,10 @@
   color: #0088cc;
 }
 
-
 .menu {
   position: absolute;
   top: 60px;
-  left: 10;
+  left: 11px;
   background-color: hsla(0, 0%, 100%, 0.73);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 16px;
@@ -256,6 +255,8 @@
 }
 
 .checkbox {
+  position: absolute;
+  left: 400px;
   transform: scale(1.3);
 }
 
@@ -312,3 +313,4 @@
 .deleteIcon {
   font-size: 24px;
 }
+

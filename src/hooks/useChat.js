@@ -18,6 +18,7 @@ export const useChat = (chatId) => {
   
   const user = useSelector((state) => state.user.user);
 
+  // ————————————— Читаем сообщения —————————————
   useEffect(() => {
     if (!chatId || !user?.uid) return;
 
@@ -43,24 +44,42 @@ export const useChat = (chatId) => {
   }, [chatId, user?.uid]);
 
   useEffect(() => {
-    const fetchOtherUser = async () => {
+    const fetchChatInfo = async () => {
       if (!chatId || !user?.uid) return;
-      
+
       try {
-        const chatDoc = await getDoc(doc(db, 'chats', chatId));
-        const members = chatDoc.data()?.members || [];
-        const otherId = members.find((uid) => uid !== user.uid);
-        
-        if (otherId) {
-          const otherSnap = await getDoc(doc(db, 'users', otherId));
-          setOtherUser(otherSnap.data());
+        const chatDocRef = doc(db, 'chats', chatId);
+        const chatDoc = await getDoc(chatDocRef);
+        const chatData = chatDoc.data();
+
+        if (!chatData) return;
+        const participantIds = chatData.participants || chatData.members || [];
+        const isAutoGroup = Array.isArray(participantIds) && participantIds.length > 2;
+        const isGroupFlag = chatData.isGroup === true || isAutoGroup;
+
+        if (isGroupFlag) {
+         
+          setOtherUser({
+            id: chatDoc.id,
+            displayName: chatData.name || 'Группа',
+            isGroup: true,
+            members: participantIds,
+            photoURL: chatData.photoURL || null
+          });
+        } else {
+
+          const otherId = participantIds.find((uid) => uid !== user.uid);
+          if (otherId) {
+            const otherSnap = await getDoc(doc(db, 'users', otherId));
+            setOtherUser(otherSnap.data());
+          }
         }
       } catch (err) {
         setError(err);
       }
     };
 
-    fetchOtherUser();
+    fetchChatInfo();
   }, [chatId, user?.uid]);
 
   useEffect(() => {
@@ -78,47 +97,63 @@ export const useChat = (chatId) => {
   }, [chatId, user?.uid]);
 
   useEffect(() => {
-  const cleanupTyping = async () => {
-    if (chatId && user?.uid) {
-      await setTypingStatus(db, chatId, user.uid, user.displayName, false);
-    }
-  };
-
-  window.addEventListener("beforeunload", cleanupTyping);
-  return () => {
-    cleanupTyping();
-    window.removeEventListener("beforeunload", cleanupTyping);
-  };
-}, [chatId, user?.uid]);
-
-  const sendMessage = async (text, file = null) => {
-    if (!text.trim() && !file) return;
-
-    try {
-      const messageData = {
-        sender: user.uid,
-        text: text.trim(),
-        timestamp: serverTimestamp(),
-        read: false,
-      };
-
-      if (file) {
-        const storageRef = ref(storage, `chats/${chatId}/files/${file.name}`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        messageData.text = url;
-        messageData.fileType = file.type.split('/')[0];
+    const cleanupTyping = async () => {
+      if (chatId && user?.uid) {
+        await setTypingStatus(db, chatId, user.uid, user.displayName, false);
       }
+    };
 
-      await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
-    } catch (err) {
-      setError(err);
+    window.addEventListener("beforeunload", cleanupTyping);
+    return () => {
+      cleanupTyping();
+      window.removeEventListener("beforeunload", cleanupTyping);
+    };
+  }, [chatId, user?.uid]);
+
+  const sendMessage = async (text, file = null, replyTo = null, voice = null) => {
+    if (!text.trim() && !file && !voice) return;
+
+    const messageData = {
+      sender: user.uid,
+      timestamp: serverTimestamp(),
+      read: false,
+    };
+
+    if (replyTo) {
+      messageData.replyTo = {
+        id: replyTo.id,
+        text: replyTo.text || "",
+        sender: replyTo.sender || null,
+      };
     }
+
+    if (voice) {
+      const voiceRef = ref(storage, `chats/${chatId}/voice/${Date.now()}.webm`);
+      await uploadBytes(voiceRef, voice);
+      const url = await getDownloadURL(voiceRef);
+      messageData.voice = url;
+    }
+
+    if (file) {
+      const fileType = file.type?.split("/")[0];
+      const fileRef = ref(storage, `chats/${chatId}/files/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      messageData.text = url;
+      messageData.fileType = fileType;
+    } else if (text.trim()) {
+      messageData.text = text.trim();
+    }
+
+    await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
   };
 
   const deleteMessage = async (messageId) => {
     try {
-      await deleteDoc(doc(db, `chats/${chatId}/messages`, messageId));
+      await updateDoc(doc(db, `chats/${chatId}/messages`, messageId), {
+        text: "[сообщение удалено]",
+        deleted: true,
+      });
     } catch (err) {
       setError(err);
     }
@@ -128,7 +163,7 @@ export const useChat = (chatId) => {
     try {
       await updateDoc(doc(db, `chats/${chatId}/messages`, messageId), {
         text: newText,
-        edited: true
+        edited: true,
       });
     } catch (err) {
       setError(err);
@@ -139,7 +174,6 @@ export const useChat = (chatId) => {
     if (!chatId || !user?.uid) return;
     setTypingStatus(db, chatId, user.uid, user.displayName, isTyping);
   };
-  
 
   return {
     messages,
@@ -150,6 +184,6 @@ export const useChat = (chatId) => {
     sendMessage,
     deleteMessage,
     updateMessage,
-    handleTyping
+    handleTyping,
   };
 };

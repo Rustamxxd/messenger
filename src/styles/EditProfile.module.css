@@ -20,15 +20,13 @@
   align-items: center;
   margin-bottom: 20px;
   padding: 5px;
-  border: 1px solid green;
-  background: green;
-  color: white;
+
   border-radius: 10px;
   transition: 0.3s ease-in-out;
 }
 
 .avatarWrapper:hover {
-  background: darkgreen;
+
   transform: scale(1.01);
 }
 
