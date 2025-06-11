@@ -14,13 +14,7 @@ export default function ChatPage() {
         <ChatList onSelectChat={setSelectedChat} selectedChat={selectedChat} />
       </div>
       <div className={styles.chatWindow}>
-        {selectedChat ? (
-          <ChatWindow chatId={selectedChat.id} />
-        ) : (
-          <div className={styles.placeholder}>
-            <h2>Выберите чат</h2>
-          </div>
-        )}
+        {selectedChat && <ChatWindow chatId={selectedChat.id} />}
       </div>
     </div>
   );

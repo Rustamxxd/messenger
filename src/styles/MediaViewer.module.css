@@ -103,3 +103,30 @@
   border: 1px solid white;
   transform: scale(1.05);
 }
+
+.download {
+  font-size: 25px;
+  transition: 0.2s ease-in-out;
+}
+
+.zoom {
+  font-size: 25px;
+  transition: 0.2s ease-in-out;
+}
+
+.close {
+  font-size: 25px;
+  transition: 0.2s ease-in-out;
+}
+
+.download:hover {
+  transform: scale(1.05);
+}
+
+.zoom:hover{
+  transform: scale(1.05);
+}
+
+.close:hover{
+  transform: scale(1.05);
+}

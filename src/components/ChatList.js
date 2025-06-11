@@ -12,9 +12,11 @@ import { IoIosSearch, IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { FaPen, FaUsers } from 'react-icons/fa';
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlinePlus } from 'react-icons/hi';
-import { Checkbox, Spin } from 'antd';
+import { Checkbox, Spin, Switch } from 'antd';
 import multiavatar from '@multiavatar/multiavatar';
 import UserAvatar from './UserAvatar';
+import { useTheme } from '@/hooks/useTheme';
+import { BsMoonStarsFill } from "react-icons/bs";
 
 export default function ChatList({ onSelectChat }) {
   const [search, setSearch] = useState('');
@@ -24,6 +26,7 @@ export default function ChatList({ onSelectChat }) {
   const [sidebarWidth, setSidebarWidth] = useState(450);
   const [contextMenu, setContextMenu] = useState(null);
   const contextMenuRef = useRef(null);
+  const { isDark, toggleTheme } = useTheme();
 
   const user = useSelector((state) => state.user.user);
   const router = useRouter();
@@ -120,29 +123,39 @@ export default function ChatList({ onSelectChat }) {
       </div>
 
       {menuOpen && (
-        <div className={styles.menu}>
-          <div className={styles.profileSection} onClick={() => router.push('/profile')}>
-            <div className={styles.profileInfo}>
-              <div className={styles.avatarMenu}>
-                <UserAvatar user={user} />
-              </div>
-              <span className={styles.displayName}>{user?.displayName}</span>
-            </div>
-          </div>
-
-          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
-            <FaPen /> Новое сообщение
-          </div>
-
-          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
-            <FaUsers /> Создать группу
-          </div>
-
-          <div className={styles.menuItem} onClick={() => router.push('/login')}>
-            <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
-          </div>
+  <div className={styles.menu}>
+    <div className={styles.profileSection} onClick={() => router.push('/profile')}>
+      <div className={styles.profileInfo}>
+        <div className={styles.avatarMenu}>
+          <UserAvatar user={user} />
         </div>
-      )}
+        <span className={styles.displayName}>{user?.displayName}</span>
+      </div>
+    </div>
+
+    <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
+      <FaPen /> Новое сообщение
+    </div>
+
+    <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
+      <FaUsers /> Создать группу
+    </div>
+
+    <div className={styles.menuItem} onClick={() => router.push('/login')}>
+      <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
+    </div>
+    <div className={styles.menuItem}>
+          <BsMoonStarsFill className={styles.icon} />
+          <span className={styles.label}>Ночная тема</span>
+        </div>
+        <Switch
+          checked={isDark}
+          onChange={toggleTheme}
+          className={styles.themeSwitch}
+          size="small"
+        />
+  </div>
+)}
 
       {mode && (
         <div className={styles.backButton} onClick={() => { setMode(null); setSelectedUsers([]); }}>
@@ -271,7 +284,7 @@ export default function ChatList({ onSelectChat }) {
               setContextMenu(null);
             }}
           >
-            <MdDeleteOutline /> Удалить чат
+            <MdDeleteOutline className={styles.deleteIcon}/> Удалить чат
           </button>
         </div>
       )}

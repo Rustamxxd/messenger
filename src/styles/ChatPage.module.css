@@ -7,20 +7,14 @@
   }
   
   .chatWindow {
-    background: url('https://static-www.adweek.com/wp-content/uploads/2022/07/Messenger-Our-Places-Chat-Theme-Hero.png?w=1200') no-repeat center/cover;
+    background: url('/assets/chatPage-background.png') repeat,
+    radial-gradient(circle at 20% 80%, #ffd8a6 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, #7dafd6 0%, transparent 40%),
+    linear-gradient(135deg, #f5efe6 0%, #c0cbd8 100%);
     flex: 1;
     display: flex;
     flex-direction: column;
     background-color: #ffffff;
     position: relative;
-  }
-  
-  .placeholder {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #888;
-    font-size: 18px;
   }
   

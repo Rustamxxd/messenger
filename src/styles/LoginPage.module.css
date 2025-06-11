@@ -3,28 +3,17 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: url('https://i.imgur.com/j8IEfV4.gif') no-repeat center;
-  background-size: cover;
+  background: url('/assets/login-background.png') repeat,
+  linear-gradient(135deg  , #7dafd6 0%, #c0cbd8 100%);
+  background-size: auto, cover;
   animation: moveBackground 10s linear infinite;
-}
-
-@keyframes moveBackground {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
 }
 
 .formContainer {
   background-color: rgba(255, 255, 255, 0.74);
   backdrop-filter: blur(9px);
   padding: 30px;
-  border-radius: 10px;
+  border-radius: 30px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
@@ -34,7 +23,7 @@
 .title {
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .input {
@@ -48,23 +37,23 @@
 
 .input:hover {
   cursor: pointer;
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
 .button {
   width: 100%;
-  padding: 12px;
-  background-color: #4CAF50;
+  padding: 12px 55px;
+  background-color: #4ca3af;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 16px;
   transition:  0.3s ease-in-out;
 }
 
 .button:hover {
-  background-color: #45a049;
+  background-color: #499da8;
   transform: scale(0.98);
 }
 
@@ -75,15 +64,13 @@
 }
 
 .switchToRegister {
-  margin-top: 20px;
+  margin-top: 15px;
   font-size: 14px;
 }
 
 .registerLink {
-  color: #4CAF50;
+  color: #4ca3af;
   font-weight: bold;
-  text-decoration: none;
-  
 }
 
 .registerLink:hover {
@@ -98,11 +85,11 @@
   background-color: rgba(255, 255, 255, 0.959);
   color: black;
   border: 1px solid whitesmoke;
-  border-radius: 5px;
+  border-radius: 30px;
   font-size: 16px;
   cursor: pointer;
-  margin-top: 10px;
-  transition: background-color 0.3s ease;
+  margin-top: 7px;
+  transition: 0.3s ease;
 }
 
 .googleButton:hover {
@@ -110,6 +97,9 @@
 }
 
 .googleIcon {
-  margin-right: 10px;
+  width: 27px;
+  height: 25px;
+  margin-right: 5px;
+  object-fit: cover;
 }
 

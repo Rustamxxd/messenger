@@ -1,7 +1,12 @@
 .container {
+  position: absolute;
+  left: 37%;
+  top: 10%;
   display: flex;
   flex-direction: column;
-  max-width: 400px;
+  align-items: center;
+  justify-content: center;
+  width: 500px;
   margin: 0 auto;
   padding: 20px;
   border-radius: 12px;
@@ -12,6 +17,7 @@
 .title {
   text-align: center;
   margin-bottom: 20px;
+  font-size: 20px;
 }
 
 .avatarWrapper {
@@ -20,19 +26,13 @@
   align-items: center;
   margin-bottom: 20px;
   padding: 5px;
-
   border-radius: 10px;
   transition: 0.3s ease-in-out;
 }
 
-.avatarWrapper:hover {
-
-  transform: scale(1.01);
-}
-
 .avatar {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 10px;
@@ -77,7 +77,7 @@
   width: 100%;
   margin-top: 12px;
   padding: 12px;
-  background-color: #d9534f;
+  background-color: #d11616;
   color: white;
   border: none;
   border-radius: 8px;
@@ -91,7 +91,89 @@
 }
 
 .successMessage {
+  text-align: center;
+  animation: fade-in-out 3s ease-in-out forwards;
   color: green;
   margin-top: 10px;
   font-weight: 500;
+}
+
+@keyframes fade-in-out {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.deleteButton {
+  width: 200px;
+  background: transparent;
+  color: whitesmoke;
+  background: darkred;
+  padding: 8px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: rgb(167, 0, 0);
+}
+
+.button,
+.logoutButton,
+.deleteButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, 0.2s ease-in-out;
+}
+
+.button:hover,
+.logoutButton:hover,
+.deleteButton:hover {
+  transform: scale(1.03);
+}
+
+.button svg,
+.logoutButton svg,
+.deleteButton svg {
+  font-size: 19px;
+}
+
+.confirm {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.uploadLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, 0.2s ease-in-out;
+  color: white;
+  font-weight: bold;
+  background: teal;
+}
+
+.uploadLabel svg {
+  font-size: 20px;
+}
+
+.uploadLabel:hover {
+  background-color: rgb(34, 116, 107);
+  transform: scale(1.03);
 }

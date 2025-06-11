@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import styles from "../styles/MediaViewer.module.css";
 import { IoIosArrowBack, IoIosArrowForward, IoMdClose } from "react-icons/io";
-import { FiDownload, FiZoomIn, FiMoreHorizontal } from "react-icons/fi";
+import { FiDownload, FiZoomIn } from "react-icons/fi";
 
 const MediaViewer = ({ files = [], initialIndex = 0, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -75,10 +75,9 @@ if (!currentFile) return null;
     <div className={styles.overlay}>
       <div className={styles.header}>
         <div className={styles.actions}>
-          <a href={currentFile.url} download target="_blank" rel="noopener noreferrer"><FiDownload /></a>
-          <button onClick={toggleZoom}><FiZoomIn /></button>
-          <button><FiMoreHorizontal /></button>
-          <button onClick={onClose}><IoMdClose /></button>
+          <a href={currentFile.url} download target="_blank" rel="noopener noreferrer"><FiDownload className={styles.download}/></a>
+          <button onClick={toggleZoom}><FiZoomIn className={styles.zoom}/></button>
+          <button onClick={onClose}><IoMdClose className={styles.close}/></button>
         </div>
       </div>
 

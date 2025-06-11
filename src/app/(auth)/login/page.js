@@ -127,7 +127,7 @@ export default function LoginPage() {
           className={`${styles.button} ${styles.googleButton}`}
         >
           <img
-            src="https://auth.openai.com/assets/google-logo-NePEveMl.svg"
+            src="/assets/google-icon.png"
             alt="Google"
             className={styles.googleIcon}
           />

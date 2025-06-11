@@ -6,7 +6,7 @@ const UserAvatar = ({ user, size = 45 }) => {
     return (
       <img
         src={user.photoURL}
-        alt="Аватар"
+        
         style={{
           width: size,
           height: size,

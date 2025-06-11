@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "@/styles/ChatWindow.module.css";
+import { FaReply } from "react-icons/fa";
+import { MdEdit, MdDeleteOutline } from "react-icons/md";
 
 const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, onDelete }) => {
   const menuRef = useRef(null);
@@ -34,29 +36,38 @@ const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, o
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       <li
-        onClick={() => {
-          onReply?.(selectedMessage);
-          onClose();
-        }}
-      >
-        ↩️ Ответить
-      </li>
-      <li
-        onClick={() => {
-          onEdit?.(selectedMessage);
-          onClose();
-        }}
-      >
-        ✏️ Редактировать
-      </li>
-      <li
-        onClick={() => {
-          onDelete?.(selectedMessage.id);
-          onClose();
-        }}
-      >
-        🗑️ Удалить
-      </li>
+  onClick={() => {
+    onReply?.(selectedMessage);
+    onClose();
+  }}
+>
+  <span className={styles.contextItem}>
+    <FaReply className={styles.reply} />
+    Ответить
+  </span>
+</li>
+<li
+  onClick={() => {
+    onEdit?.(selectedMessage);
+    onClose();
+  }}
+>
+  <span className={styles.contextItem}>
+    <MdEdit className={styles.edit} />
+    Редактировать
+  </span>
+</li>
+<li
+  onClick={() => {
+    onDelete?.(selectedMessage.id);
+    onClose();
+  }}
+>
+  <span className={styles.contextItem}>
+    <MdDeleteOutline className={styles.delete} />
+    Удалить
+  </span>
+</li>
     </ul>
   );
 };
