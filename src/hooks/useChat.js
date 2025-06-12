@@ -1,12 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { db, storage } from '@/lib/firebase';
-import { 
-  collection, query, orderBy, onSnapshot,
-  doc, getDoc, addDoc, serverTimestamp,
-  deleteDoc, updateDoc
+import {
+  db,
+  storage
+} from '@/lib/firebase';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  serverTimestamp,
+  writeBatch,
+  deleteDoc,
+  arrayUnion
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from 'firebase/storage';
 import { setTypingStatus } from '../../utils/chatUtils';
 
 export const useChat = (chatId) => {
@@ -15,10 +32,9 @@ export const useChat = (chatId) => {
   const [typingUsers, setTypingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const user = useSelector((state) => state.user.user);
 
-  // ————————————— Читаем сообщения —————————————
   useEffect(() => {
     if (!chatId || !user?.uid) return;
 
@@ -31,7 +47,8 @@ export const useChat = (chatId) => {
     const unsubscribeMessages = onSnapshot(
       messagesQuery,
       (snapshot) => {
-        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setMessages(msgs);
         setLoading(false);
       },
       (err) => {
@@ -51,14 +68,12 @@ export const useChat = (chatId) => {
         const chatDocRef = doc(db, 'chats', chatId);
         const chatDoc = await getDoc(chatDocRef);
         const chatData = chatDoc.data();
-
         if (!chatData) return;
-        const participantIds = chatData.participants || chatData.members || [];
-        const isAutoGroup = Array.isArray(participantIds) && participantIds.length > 2;
-        const isGroupFlag = chatData.isGroup === true || isAutoGroup;
 
-        if (isGroupFlag) {
-         
+        const participantIds = chatData.participants || chatData.members || [];
+        const isGroup = chatData.isGroup === true || participantIds.length > 2;
+
+        if (isGroup) {
           setOtherUser({
             id: chatDoc.id,
             displayName: chatData.name || 'Группа',
@@ -67,7 +82,6 @@ export const useChat = (chatId) => {
             photoURL: chatData.photoURL || null
           });
         } else {
-
           const otherId = participantIds.find((uid) => uid !== user.uid);
           if (otherId) {
             const otherSnap = await getDoc(doc(db, 'users', otherId));
@@ -81,6 +95,25 @@ export const useChat = (chatId) => {
 
     fetchChatInfo();
   }, [chatId, user?.uid]);
+
+  useEffect(() => {
+    if (!chatId || !user?.uid || messages.length === 0) return;
+
+    const unreadMessages = messages.filter(
+      (msg) => !msg.read && msg.sender !== user.uid
+    );
+
+    const markAsRead = async () => {
+      const batch = writeBatch(db);
+      unreadMessages.forEach((msg) => {
+        const msgRef = doc(db, `chats/${chatId}/messages`, msg.id);
+        batch.update(msgRef, { read: true });
+      });
+      await batch.commit();
+    };
+
+    markAsRead();
+  }, [messages, chatId, user?.uid]);
 
   useEffect(() => {
     if (!chatId || !user?.uid) return;
@@ -124,6 +157,7 @@ export const useChat = (chatId) => {
         id: replyTo.id,
         text: replyTo.text || "",
         sender: replyTo.sender || null,
+        fileType: replyTo.fileType || null
       };
     }
 
@@ -132,9 +166,9 @@ export const useChat = (chatId) => {
       await uploadBytes(voiceRef, voice);
       const url = await getDownloadURL(voiceRef);
       messageData.voice = url;
-    }
-
-    if (file) {
+      messageData.fileType = "audio";
+      messageData.text = url;
+    } else if (file) {
       const fileType = file.type?.split("/")[0];
       const fileRef = ref(storage, `chats/${chatId}/files/${Date.now()}_${file.name}`);
       await uploadBytes(fileRef, file);
@@ -146,16 +180,33 @@ export const useChat = (chatId) => {
     }
 
     await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
+
+    // Обновление lastMessage
+    await updateDoc(doc(db, 'chats', chatId), {
+      lastMessage: {
+        text: messageData.text || '[файл]',
+        timestamp: serverTimestamp(),
+        sender: user.uid
+      }
+    });
   };
 
-  const deleteMessage = async (messageId) => {
+  const deleteMessage = async (messageId, message) => {
     try {
-      await updateDoc(doc(db, `chats/${chatId}/messages`, messageId), {
-        text: "[сообщение удалено]",
-        deleted: true,
-      });
-    } catch (err) {
-      setError(err);
+      // Полностью удаляем сообщение из базы данных
+      await deleteDoc(doc(db, `chats/${chatId}/messages`, messageId));
+
+      // Удаление файла из storage (если нужно)
+      if (message?.fileType) {
+        const fileRef = ref(storage, message.text);
+        try {
+          await deleteObject(fileRef);
+        } catch (error) {
+          console.error("Error deleting file:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
     }
   };
 

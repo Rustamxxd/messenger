@@ -37,6 +37,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 12px 16px;
+  display: flex;
 }
 
 .messageColumn {
@@ -175,11 +176,45 @@
   align-items: center;
   font-size: 13px;
   color: #333;
+  gap: 8px;
+}
+
+.replyMediaPreview {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.replyAudioPreview {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #e3e3e3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.replyAudioIcon {
+  font-size: 20px;
+  color: #666;
+}
+
+.replyContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .replyLabel {
   font-weight: bold;
   margin-right: 8px;
+  white-space: nowrap;
 }
 
 .replyText {
@@ -245,21 +280,6 @@
   transform: scale(1.02);
 }
 
-.shadowTopWrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  background: transparent;
-}
-
-.shadowTop {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.8);
-  width: 100%;
-  max-width: 800px;
-  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
-}
-
 .scrollDownBtn {
   position: absolute;
   bottom: 90px;
@@ -274,11 +294,15 @@
   font-size: 20px;
   color: gray;
   z-index: 10;
-  transition: 0.2s ease;
+  transition: opacity 0.3s, transform 0.3s cubic-bezier(.4,2,.6,1);
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
-.scrollDownBtn:hover {
-  background: #0088cc;
-  color: white;
+.scrollDownBtnHidden {
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
 }
 
 .arrowDown {
@@ -359,8 +383,10 @@
 }
 
 .attachment {
-  font-size: 22px;
+  font-size: 20px;
   color: gray;
+  transition: 0.25s ease;
+  cursor: pointer;
 }
 
 .attachment:hover {
@@ -385,23 +411,37 @@
   overflow: hidden;
 }
 
-.previewThumb {
+.highlighted {
+  animation: highlight 2s ease-out;
+  border-radius: 16px;
+}
+@keyframes highlight {
+  0% {
+    background-color: rgba(255, 255, 0, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.shadowTopWrapper {
+  display: flex;
+  justify-content: center;
   width: 100%;
-  height: auto;
-  object-fit: cover;
-  border-radius: 10px;
+  background: transparent;
+  opacity: 1;
+  transition: opacity 0.3s;
+  pointer-events: auto;
+}
+.shadowTopWrapperHidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.removePreview {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  font-size: 16px;
-  border-radius: 50%;
-  padding: 2px 6px;
-  cursor: pointer;
+.shadowTop {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
 }
-

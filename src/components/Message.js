@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "@/styles/Message.module.css";
 import VoiceMessagePlayer from "./VoiceMessagePlayer";
+import { LuCheck, LuCheckCheck } from "react-icons/lu";
+import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
 
 const Message = ({
   message,
   isOwn,
   onContextMenu,
+  onReply,
+  onReplyClick,
+  onDelete,
+  onHide,
   setModalMedia,
   allMedia = [],
   isEditing,
@@ -51,24 +57,44 @@ const Message = ({
 
   return (
     <div
+      id={`message-${message.id}`}
       className={`${styles.message} ${isOwn ? styles.own : ""}`}
       onContextMenu={(e) => onContextMenu(e, message)}
     >
       <div className={styles.messageColumn}>
         {message.replyTo && (
-          <div className={styles.reply}>
-            <div className={styles.replyText}>
-              {message.replyTo.text?.length > 50
-                ? message.replyTo.text.slice(0, 50) + "..."
-                : message.replyTo.text}
+          <div 
+            className={styles.reply} 
+            onClick={() => onReplyClick(message)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={styles.replyText} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {message.replyTo.fileType === "image" && (
+                <img src={message.replyTo.text} alt="preview" className={styles.replyMediaPreview} />
+              )}
+              {message.replyTo.fileType === "video" && (
+                <video src={message.replyTo.text} className={styles.replyMediaPreview} />
+              )}
+              {message.replyTo.fileType === "audio" && (
+                <div className={styles.replyAudioPreview}>
+                  <span className={styles.replyAudioIcon}>🎵</span>
+                </div>
+              )}
+              {message.replyTo.fileType ? (
+                message.replyTo.fileType === "audio" ? "Голос" :
+                message.replyTo.fileType === "image" ? "Фото" :
+                message.replyTo.fileType === "video" ? "Видео" : "Файл"
+              ) : (
+                message.replyTo.text?.length > 50
+                  ? message.replyTo.text.slice(0, 50) + "..."
+                  : message.replyTo.text
+              )}
             </div>
           </div>
         )}
 
         <div className={styles.content}>
-          {message.deleted ? (
-            <i className={styles.deleted}>[сообщение удалено]</i>
-          ) : isEditing ? (
+          {isEditing ? (
             <div className={styles.editContainer}>
               <textarea
                 ref={textareaRef}
@@ -133,7 +159,7 @@ const Message = ({
             </span>
             {isOwn && !message.deleted && (
               <span className={styles.readStatus}>
-                {message.read ? "✓✓" : "✓"}
+                {message.read ? <IoCheckmarkDone /> : <IoCheckmark />}
               </span>
             )}
           </div>

@@ -1,6 +1,5 @@
-'use client';
-
 import StoreProvider from './store/provider';
+import { AuthProvider } from '@/components/AuthProvider';
 import '../styles/globals.css';
 
 export default function RootLayout({ children }) {
@@ -13,7 +12,9 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <StoreProvider>
+          <AuthProvider>
             {children}
+          </AuthProvider>
         </StoreProvider>
       </body>
     </html>

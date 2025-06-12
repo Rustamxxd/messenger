@@ -1,0 +1,140 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(6px);
+}
+
+.sendLabel {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 15px;
+  color: whitesmoke;
+  letter-spacing: 0.02em;
+}
+
+.wrapper {
+  min-width: 700px;
+  margin-bottom: 10px;
+  background: url('/assets/chatBackground.png') repeat,
+  radial-gradient(circle at 20% 80%, #b15e8e 0%, transparent 40%),
+  radial-gradient(circle at 80% 80%, #8952a8 0%, transparent 40%),
+    linear-gradient(135deg, #966b9e 0%, #6c5070 100%);
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+  color: whitesmoke;
+  transition: all 0.25s ease;
+}
+
+.closeBtn:hover {
+  transform: scale(1.1);
+}
+
+.mediaPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 12px 0;
+  width: 100%;
+}
+
+.imagePreview, .videoPreview {
+  box-shadow: 0 12px 30px rgba(0,0,0,1);
+  object-fit: contain;
+  width: 500px;
+  height: 500px;
+  border-radius: 8px;
+}
+
+.audioPreview {
+  width: 320px;
+}
+
+.inputBubble {
+  margin: 0 20px 10px;
+  box-shadow: none;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 13px;
+  padding: 6px 12px;
+  flex: 1;
+  height: 44px;
+  border: 1px solid #eee;
+  resize: none;
+}
+
+.emojiWrapper {
+  position: relative;
+  margin-right: 4px;
+}
+
+.smile {
+  font-size: 24px;
+  color: gray;
+}
+
+.smile:hover {
+  color: #0088cc;
+}
+
+.emojiPicker {
+  position: absolute;
+  bottom: 36px;
+  right: 0;
+  z-index: 10;
+}
+
+.captionInput {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 15px;
+  padding: 10px 10px;
+  background: transparent;
+}
+
+
+
+.sendIconBtn {
+  background: white;
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding-left: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  color: #0088cc;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sendIconBtn:hover {
+  color: white;
+  background: #0088cc;
+} 

@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import styles from "@/styles/ChatWindow.module.css";
 import { FaReply } from "react-icons/fa";
 import { MdEdit, MdDeleteOutline } from "react-icons/md";
+import { useSelector } from "react-redux";
 
-const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, onDelete }) => {
+const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, onDelete, onHide }) => {
   const menuRef = useRef(null);
   const [position, setPosition] = useState({ top: contextMenu.y, left: contextMenu.x });
+  const user = useSelector((state) => state.user.user);
+  const isOwnMessage = selectedMessage?.sender === user?.uid;
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -36,38 +39,48 @@ const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, o
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       <li
-  onClick={() => {
-    onReply?.(selectedMessage);
-    onClose();
-  }}
->
-  <span className={styles.contextItem}>
-    <FaReply className={styles.reply} />
-    Ответить
-  </span>
-</li>
-<li
-  onClick={() => {
-    onEdit?.(selectedMessage);
-    onClose();
-  }}
->
-  <span className={styles.contextItem}>
-    <MdEdit className={styles.edit} />
-    Редактировать
-  </span>
-</li>
-<li
-  onClick={() => {
-    onDelete?.(selectedMessage.id);
-    onClose();
-  }}
->
-  <span className={styles.contextItem}>
-    <MdDeleteOutline className={styles.delete} />
-    Удалить
-  </span>
-</li>
+        onClick={() => {
+          onReply?.(selectedMessage);
+          onClose();
+        }}
+      >
+        <span className={styles.contextItem}>
+          <FaReply className={styles.reply} />
+          Ответить
+        </span>
+      </li>
+      {isOwnMessage && (
+        <li
+          onClick={() => {
+            if (selectedMessage.fileType) {
+              onReply?.(selectedMessage);
+            } else {
+              onEdit?.(selectedMessage);
+            }
+            onClose();
+          }}
+        >
+          <span className={styles.contextItem}>
+            <MdEdit className={styles.edit} />
+            Редактировать
+          </span>
+        </li>
+      )}
+      <li
+        onClick={() => {
+          if (isOwnMessage) {
+            onDelete?.(selectedMessage.id, true);
+          } else {
+            onHide?.(selectedMessage.id);
+          }
+          onClose();
+        }}
+      >
+        <span className={styles.contextItem}>
+          <MdDeleteOutline className={styles.delete} />
+          {isOwnMessage ? "Удалить" : "Скрыть"}
+        </span>
+      </li>
     </ul>
   );
 };

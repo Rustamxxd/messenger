@@ -8,7 +8,9 @@ const MessageList = ({
   typingUsers,
   onContextMenu,
   onReply,
+  onReplyClick,
   onDelete,
+  onHide,
   setModalMedia,
   onUpdateMessage,
   editingMessageId,
@@ -67,7 +69,9 @@ const MessageList = ({
                 isOwn={msg.sender === userId}
                 onContextMenu={(e) => onContextMenu(e, msg)}
                 onReply={() => onReply(msg)}
+                onReplyClick={() => onReplyClick(msg)}
                 onDelete={() => onDelete(msg.id)}
+                onHide={() => onHide(msg.id)}
                 setModalMedia={setModalMedia}
                 allMedia={allMedia}
                 isEditing={editingMessageId === msg.id}

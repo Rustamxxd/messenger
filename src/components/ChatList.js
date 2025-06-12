@@ -12,11 +12,15 @@ import { IoIosSearch, IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { FaPen, FaUsers } from 'react-icons/fa';
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlinePlus } from 'react-icons/hi';
+import { LuCheck, LuCheckCheck } from "react-icons/lu";
 import { Checkbox, Spin, Switch } from 'antd';
 import multiavatar from '@multiavatar/multiavatar';
 import UserAvatar from './UserAvatar';
 import { useTheme } from '@/hooks/useTheme';
 import { BsMoonStarsFill } from "react-icons/bs";
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
 
 export default function ChatList({ onSelectChat }) {
   const [search, setSearch] = useState('');
@@ -26,6 +30,7 @@ export default function ChatList({ onSelectChat }) {
   const [sidebarWidth, setSidebarWidth] = useState(450);
   const [contextMenu, setContextMenu] = useState(null);
   const contextMenuRef = useRef(null);
+  const [chatData, setChatData] = useState({});
   const { isDark, toggleTheme } = useTheme();
 
   const user = useSelector((state) => state.user.user);
@@ -42,6 +47,38 @@ export default function ChatList({ onSelectChat }) {
     toggleUser,
     handleDeleteChat
   } = useChatActions(user, onSelectChat);
+
+  useEffect(() => {
+    if (!user || !chats.length) return;
+
+    const unsubscribers = chats.map((chat) => {
+      const messagesRef = collection(db, 'chats', chat.id, 'messages');
+      const q = query(messagesRef, orderBy('timestamp', 'desc'));
+
+      return onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const lastMessage = messages[0];
+
+        let unreadCount = 0;
+        messages.forEach((msg) => {
+          const isUnread = msg.sender !== user.uid && !msg.read;
+          if (isUnread) unreadCount += 1;
+        });
+
+        setChatData(prev => ({
+          ...prev,
+          [chat.id]: {
+            lastMessage,
+            unreadCount
+          }
+        }));
+      });
+    });
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub());
+    };
+  }, [user, chats]);
 
   const filteredChats = chats.filter((chat) =>
     chat.displayName?.toLowerCase().includes(search.toLowerCase())
@@ -123,39 +160,40 @@ export default function ChatList({ onSelectChat }) {
       </div>
 
       {menuOpen && (
-  <div className={styles.menu}>
-    <div className={styles.profileSection} onClick={() => router.push('/profile')}>
-      <div className={styles.profileInfo}>
-        <div className={styles.avatarMenu}>
-          <UserAvatar user={user} />
+        <div className={styles.menu}>
+          <div className={styles.profileSection} onClick={() => router.push('/profile')}>
+            <div className={styles.profileInfo}>
+              <div className={styles.avatarMenu}>
+                <UserAvatar user={user} />
+              </div>
+              <span className={styles.displayName}>{user?.displayName}</span>
+            </div>
+          </div>
+
+          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
+            <FaPen /> Новое сообщение
+          </div>
+
+          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
+            <FaUsers /> Создать группу
+          </div>
+
+          <div className={styles.menuItem} onClick={() => router.push('/login')}>
+            <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
+          </div>
+
+          <div className={styles.menuItem}>
+            <BsMoonStarsFill className={styles.icon} />
+            <span className={styles.label}>Ночная тема</span>
+          </div>
+          <Switch
+            checked={isDark}
+            onChange={toggleTheme}
+            className={styles.themeSwitch}
+            size="small"
+          />
         </div>
-        <span className={styles.displayName}>{user?.displayName}</span>
-      </div>
-    </div>
-
-    <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
-      <FaPen /> Новое сообщение
-    </div>
-
-    <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
-      <FaUsers /> Создать группу
-    </div>
-
-    <div className={styles.menuItem} onClick={() => router.push('/login')}>
-      <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
-    </div>
-    <div className={styles.menuItem}>
-          <BsMoonStarsFill className={styles.icon} />
-          <span className={styles.label}>Ночная тема</span>
-        </div>
-        <Switch
-          checked={isDark}
-          onChange={toggleTheme}
-          className={styles.themeSwitch}
-          size="small"
-        />
-  </div>
-)}
+      )}
 
       {mode && (
         <div className={styles.backButton} onClick={() => { setMode(null); setSelectedUsers([]); }}>
@@ -186,9 +224,7 @@ export default function ChatList({ onSelectChat }) {
                       />
                     )}
                   </div>
-                  <p className={styles.chatName}>
-                    {u.displayName || u.email}
-                  </p>
+                  <p className={styles.chatName}>{u.displayName || u.email}</p>
                 </div>
                 {mode === 'group' && (
                   <Checkbox
@@ -208,7 +244,6 @@ export default function ChatList({ onSelectChat }) {
               onClick={async () => {
                 const groupName = prompt('Введите название группы:');
                 if (!groupName) return;
-
                 try {
                   const success = await createGroupChat(selectedUsers, groupName);
                   if (success) {
@@ -231,40 +266,54 @@ export default function ChatList({ onSelectChat }) {
       ) : (
         <div className={styles.chatList}>
           {filteredChats.length > 0 ? (
-            filteredChats.map((chat) => (
-              <div
-                key={chat.id}
-                className={`${styles.chatItem} ${chat.id === activeChatId ? styles.selected : ''}`}
-                onClick={() => handleSelectChat(chat)}
-                onContextMenu={(e) => handleContextMenu(e, chat)}
-              >
-                <div>
-                  {chat.photoURL ? (
-                    <img src={chat.photoURL} alt="avatar" className={styles.avatar} />
-                  ) : (
-                    <div
-                      className={styles.avatar}
-                      dangerouslySetInnerHTML={{ __html: multiavatar(chat.displayName) }}
-                    />
-                  )}
+            filteredChats.map((chat) => {
+              const data = chatData[chat.id] || {};
+              const lastMessage = data.lastMessage || chat.lastMessage;
+              const unreadCount = data.unreadCount ?? chat.unreadCount;
+              return (
+                <div
+                  key={chat.id}
+                  className={`${styles.chatItem} ${chat.id === activeChatId ? styles.selected : ''}`}
+                  onClick={() => handleSelectChat(chat)}
+                  onContextMenu={(e) => handleContextMenu(e, chat)}
+                >
+                  <div>
+                    {chat.photoURL ? (
+                      <img src={chat.photoURL} alt="avatar" className={styles.avatar} />
+                    ) : (
+                      <div
+                        className={styles.avatar}
+                        dangerouslySetInnerHTML={{ __html: multiavatar(chat.displayName) }}
+                      />
+                    )}
+                  </div>
+                  <div className={styles.chatContent}>
+                    <p className={styles.chatName}>{chat.displayName}</p>
+                    <div className={styles.lastMessageContainer}>
+                      <p className={styles.lastMessage}>
+                        {chat.isGroup && lastMessage?.senderName ? `${lastMessage.senderName}: ` : ''}
+                        {lastMessage?.text}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.chatTime}>
+                    {lastMessage?.sender === user.uid && (
+                      <span className={styles.readStatus}>
+                        {lastMessage?.read ? <IoCheckmarkDone /> : <IoCheckmark />}
+                      </span>
+                    )}
+                    <div className={styles.timeContainer}>
+                      <div>{formatDate(lastMessage?.timestamp)}</div>
+                      {unreadCount > 0 && (
+                        <div className={styles.unreadBadge}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.chatContent}>
-                  <p className={styles.chatName}>{chat.displayName}</p>
-                  <p className={styles.lastMessage}>
-                    {chat.isGroup && chat.lastMessage?.senderName
-                      ? `${chat.lastMessage.senderName}: `
-                      : ''}
-                    {chat.lastMessage?.text}
-                  </p>
-                </div>
-                <div className={styles.chatTime}>
-                  <div>{formatDate(chat.lastMessage?.timestamp)}</div>
-                  {chat.unreadCount > 0 && (
-                    <div className={styles.unreadBadge}>{chat.unreadCount}</div>
-                  )}
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className={styles.loadingText}>Нет чатов</p>
           )}
@@ -284,7 +333,7 @@ export default function ChatList({ onSelectChat }) {
               setContextMenu(null);
             }}
           >
-            <MdDeleteOutline className={styles.deleteIcon}/> Удалить чат
+            <MdDeleteOutline className={styles.deleteIcon} /> Удалить чат
           </button>
         </div>
       )}

@@ -4,9 +4,11 @@ import { IoSend } from "react-icons/io5";
 import { ImAttachment } from "react-icons/im";
 import { FaRegSmile } from "react-icons/fa";
 import { MdDeleteOutline } from "react-icons/md";
+import { BsFillPlayFill } from "react-icons/bs";
 import EmojiPicker from "emoji-picker-react";
 import { useVoiceMessage } from "@/hooks/useVoiceMessage";
 import styles from "@/styles/ChatWindow.module.css";
+import MediaSendModal from "./MediaSendModal";
 
 const ChatInput = ({
   newMessage,
@@ -33,6 +35,8 @@ const ChatInput = ({
 
   const [seconds, setSeconds] = useState(0);
   const hideTimeout = useRef(null);
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -49,6 +53,28 @@ const ChatInput = ({
   const handleCancelAudio = () => {
     reset();
     setSeconds(0);
+  };
+
+  const handleFileChangeModal = (e) => {
+    const selected = e.target.files[0];
+    if (!selected) return;
+    setPendingFile(selected);
+    setShowMediaModal(true);
+  };
+
+  const handleSendMedia = async (caption) => {
+    await sendMessage(caption, pendingFile, replyTo);
+    setShowMediaModal(false);
+    setPendingFile(null);
+    setFile?.(null);
+    setReplyTo(null);
+    setNewMessage("");
+  };
+
+  const handleCancelMedia = () => {
+    setShowMediaModal(false);
+    setPendingFile(null);
+    setFile?.(null);
   };
 
   const handleSend = async () => {
@@ -76,7 +102,7 @@ const ChatInput = ({
 
   return (
     <div className={styles.inputArea}>
-      <input type="file" hidden onChange={handleFileChange} />
+      <input type="file" hidden onChange={handleFileChangeModal} />
 
       <div className={`${styles.inputBubble} ${isRecording ? styles.recording : ""}`}>
         <div
@@ -102,8 +128,29 @@ const ChatInput = ({
 
         {replyTo && (
           <div className={styles.replyPreview}>
-            <span className={styles.replyLabel}>Ответ:</span>
-            <span className={styles.replyText}>{replyTo.text?.slice(0, 80)}...</span>
+            <div className={styles.replyContent}>
+              {replyTo.fileType === "image" && (
+                <img src={replyTo.text} alt="preview" className={styles.replyMediaPreview} />
+              )}
+              {replyTo.fileType === "video" && (
+                <video src={replyTo.text} className={styles.replyMediaPreview} />
+              )}
+              {replyTo.fileType === "audio" && (
+                <div className={styles.replyAudioPreview}>
+                  <BsFillPlayFill className={styles.replyAudioIcon} />
+                </div>
+              )}
+              <span className={styles.replyLabel}>Ответ:</span>
+              <span className={styles.replyText}>
+                {replyTo.fileType ? (
+                  replyTo.fileType === "audio" ? "Голос" :
+                  replyTo.fileType === "image" ? "Фото" :
+                  replyTo.fileType === "video" ? "Видео" : "Файл"
+                ) : (
+                  replyTo.text?.slice(0, 80) + "..."
+                )}
+              </span>
+            </div>
             <button className={styles.replyCancel} onClick={() => setReplyTo(null)}>×</button>
           </div>
         )}
@@ -154,6 +201,14 @@ const ChatInput = ({
       >
         {isRecording || showSend ? <IoSend className={styles.send}/> : <PiMicrophone />}
       </button>
+
+      {showMediaModal && pendingFile && (
+        <MediaSendModal
+          file={pendingFile}
+          onSend={handleSendMedia}
+          onCancel={handleCancelMedia}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { addDoc, getDocs, collection, updateDoc, doc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import {
+  addDoc,
+  getDocs,
+  collection,
+  updateDoc,
+  doc,
+  deleteDoc,
+  serverTimestamp,
+  getDoc,
+  query,
+  where
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export function useChatActions(user, onSelectChat) {
@@ -10,14 +21,14 @@ export function useChatActions(user, onSelectChat) {
 
     const chatsSnapshot = await getDocs(collection(db, 'chats'));
     const allChats = chatsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
+
     const existingChat = allChats.find(
       (chat) =>
         chat.members?.length === 2 &&
         chat.members.includes(user.uid) &&
         chat.members.includes(targetUser.uid)
     );
-    
+
     if (existingChat) {
       onSelectChat(existingChat);
       onSuccess?.();
@@ -36,9 +47,32 @@ export function useChatActions(user, onSelectChat) {
 
   const resetUnreadCount = async (chatId) => {
     const chatRef = doc(db, 'chats', chatId);
+
+    // Сброс локального счётчика
     await updateDoc(chatRef, {
       [`unreadCount_${user.uid}`]: 0,
     });
+
+    // Отметим непрочитанные сообщения как прочитанные
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesRef, where('readBy', 'not-in', [user.uid]));
+
+    try {
+      const snapshot = await getDocs(q);
+      const updates = snapshot.docs.map(docSnap => {
+        const msg = docSnap.data();
+        const readBy = msg.readBy || [];
+        if (!readBy.includes(user.uid)) {
+          return updateDoc(doc(messagesRef, docSnap.id), {
+            readBy: [...readBy, user.uid],
+          });
+        }
+        return null;
+      });
+      await Promise.all(updates.filter(Boolean));
+    } catch (err) {
+      console.error('Ошибка при обновлении readBy:', err);
+    }
   };
 
   const toggleUser = (userToAdd) => {

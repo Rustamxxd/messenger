@@ -13,9 +13,12 @@ export function useChatList(user) {
     chats.forEach(chat => {
       const chatKey = chat.members.sort().join('_');
       const key = chat.members.length > 2 ? chat.id : chatKey;
-      
-      if (!uniqueChatsMap.has(key) || 
-          (chat.lastMessage?.timestamp?.seconds > uniqueChatsMap.get(key).lastMessage?.timestamp?.seconds)) {
+
+      if (
+        !uniqueChatsMap.has(key) ||
+        (chat.lastMessage?.timestamp?.seconds >
+          uniqueChatsMap.get(key).lastMessage?.timestamp?.seconds)
+      ) {
         uniqueChatsMap.set(key, chat);
       }
     });
@@ -39,7 +42,7 @@ export function useChatList(user) {
             ...doc.data()
           }));
 
-          const userChats = allChats.filter(chat => 
+          const userChats = allChats.filter(chat =>
             chat.members?.includes(user.uid)
           );
 
@@ -64,21 +67,46 @@ export function useChatList(user) {
                 photoURL = otherUser?.photoURL || null;
               }
 
-              const messagesQuery = query(
-                collection(db, 'chats', chat.id, 'messages'),
-                orderBy('timestamp', 'desc'),
-                limit(1)
-                );
-              const messagesSnapshot = await getDocs(messagesQuery);
-              const lastMessage = messagesSnapshot.docs[0]?.data();
-
-              const unreadQuery = query(
-                collection(db, 'chats', chat.id, 'messages'),
-                where('read', '==', false),
-                where('sender', '!=', user.uid)
+              const allMessagesSnapshot = await getDocs(
+                collection(db, 'chats', chat.id, 'messages')
               );
-              const unreadSnapshot = await getDocs(unreadQuery);
-              const unreadCount = unreadSnapshot.size;
+              const allMessages = allMessagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+              const lastMessage = allMessages.length > 0
+                ? allMessages.reduce((a, b) => (a.timestamp?.seconds > b.timestamp?.seconds ? a : b))
+                : null;
+
+              if (lastMessage) {
+                if (!lastMessage.sender) {
+                  lastMessage.sender = lastMessage.senderId || lastMessage.authorId || lastMessage.userId || null;
+                }
+              }
+
+              const otherUserId = !isGroup ? chat.members.find(id => id !== user.uid) : null;
+
+              let checkmarkStatus = 0;
+              if (lastMessage && lastMessage.sender === user.uid) {
+                if (isGroup) {
+                  const others = chat.members.filter(id => id !== user.uid);
+                  const allRead = others.every(id => lastMessage.readBy?.includes(id));
+                  checkmarkStatus = allRead ? 2 : 1;
+                } else if (otherUserId) {
+                  checkmarkStatus = lastMessage.readBy?.includes(otherUserId) ? 2 : 1;
+                }
+              }
+
+              let unreadForOther = 0;
+              if (otherUserId) {
+                unreadForOther = allMessages.filter(
+                  (msg) => msg.sender === user.uid && !(msg.readBy || []).includes(otherUserId)
+                ).length;
+              }
+
+              let unreadCount = 0;
+              allMessages.forEach((msg) => {
+                const isUnread = msg.sender !== user.uid && !msg.readBy?.includes(user.uid);
+                if (isUnread) unreadCount += 1;
+              });
 
               return {
                 ...chat,
@@ -86,6 +114,8 @@ export function useChatList(user) {
                 photoURL,
                 lastMessage,
                 unreadCount,
+                unreadForOther,
+                checkmarkStatus,
                 isGroup
               };
             })
@@ -101,13 +131,13 @@ export function useChatList(user) {
           setLoading(false);
         });
       } catch (err) {
-        console.error('Error loading chats:', err);
+        console.error('Ошибка загрузки чатов:', err);
         setError(err);
         setLoading(false);
       }
     };
-    fetchChats();
 
+    fetchChats();
     return () => unsubscribe && unsubscribe();
   }, [user?.uid]);
 

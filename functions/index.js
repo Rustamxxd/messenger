@@ -25,6 +25,7 @@ exports.updateLastMessageAndUnread = onDocumentCreated(
       },
     };
 
+    // Only increment unread count for other users
     members.forEach((uid) => {
       if (uid !== messageData.sender) {
         updateData[`unreadCount_${uid}`] = admin.firestore.FieldValue.increment(1);
