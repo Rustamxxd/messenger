@@ -28,6 +28,7 @@ import { setTypingStatus } from '../../utils/chatUtils';
 
 export const useChat = (chatId) => {
   const [messages, setMessages] = useState([]);
+  const [optimisticMessages, setOptimisticMessages] = useState([]);
   const [otherUser, setOtherUser] = useState(null);
   const [typingUsers, setTypingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +49,16 @@ export const useChat = (chatId) => {
       messagesQuery,
       (snapshot) => {
         const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setMessages(msgs);
+        // Убираем временные сообщения, если они уже пришли из Firestore
+        const filteredOptimistic = optimisticMessages.filter(
+          (om) => !msgs.some((m) => m.text === om.text && m.sender === om.sender && (!om.fileType || m.fileType === om.fileType))
+        );
+        setMessages([...msgs, ...filteredOptimistic]);
         setLoading(false);
+        // Если хотя бы одно сообщение пришло из Firestore, очищаем optimistic
+        if (filteredOptimistic.length !== optimisticMessages.length) {
+          setOptimisticMessages(filteredOptimistic);
+        }
       },
       (err) => {
         setError(err);
@@ -58,7 +67,7 @@ export const useChat = (chatId) => {
     );
 
     return () => unsubscribeMessages();
-  }, [chatId, user?.uid]);
+  }, [chatId, user?.uid, optimisticMessages]);
 
   useEffect(() => {
     const fetchChatInfo = async () => {
@@ -161,6 +170,20 @@ export const useChat = (chatId) => {
       };
     }
 
+    // --- Только для текстовых сообщений добавляем optimistic ---
+    if (text.trim() && !file && !voice) {
+      const tempId = 'temp-' + Date.now();
+      const optimisticMsg = {
+        id: tempId,
+        sender: user.uid,
+        text: text.trim(),
+        timestamp: new Date(),
+        // ...другие поля
+      };
+      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+    }
+
+    try {
     if (voice) {
       const voiceRef = ref(storage, `chats/${chatId}/voice/${Date.now()}.webm`);
       await uploadBytes(voiceRef, voice);
@@ -168,6 +191,7 @@ export const useChat = (chatId) => {
       messageData.voice = url;
       messageData.fileType = "audio";
       messageData.text = url;
+        if (text.trim()) messageData.caption = text.trim();
     } else if (file) {
       const fileType = file.type?.split("/")[0];
       const fileRef = ref(storage, `chats/${chatId}/files/${Date.now()}_${file.name}`);
@@ -175,10 +199,12 @@ export const useChat = (chatId) => {
       const url = await getDownloadURL(fileRef);
       messageData.text = url;
       messageData.fileType = fileType;
+        if (text.trim()) messageData.caption = text.trim();
     } else if (text.trim()) {
       messageData.text = text.trim();
     }
 
+      // Только теперь добавляем настоящее сообщение в Firestore
     await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
 
     // Обновление lastMessage
@@ -189,6 +215,11 @@ export const useChat = (chatId) => {
         sender: user.uid
       }
     });
+    } catch (error) {
+      // Если ошибка — убираем временное сообщение
+      setOptimisticMessages((prev) => prev.filter((msg) => !msg.id?.startsWith('temp-')));
+      throw error;
+    }
   };
 
   const deleteMessage = async (messageId, message) => {

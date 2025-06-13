@@ -3,10 +3,53 @@
 import { useRouter } from "next/navigation";
 import styles from "@/styles/ChatWindow.module.css";
 import MultiAvatar from "./UserAvatar";
+import { useEffect, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import LoadingDots from "./LoadingDots";
 
-const ChatHeader = ({ otherUser }) => {
-  console.log("ChatHeader otherUser:", otherUser);
+const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrNameClick }) => {
   const router = useRouter();
+  const [otherUser, setOtherUser] = useState(initialOtherUser);
+
+  useEffect(() => {
+    setOtherUser(initialOtherUser); // Сбрасываем состояние при смене пользователя
+    
+    if (!initialOtherUser?.uid) return;
+
+    const userRef = doc(db, 'users', initialOtherUser.uid);
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const userData = doc.data();
+        setOtherUser(prevUser => ({
+          ...prevUser,
+          ...userData,
+          lastSeen: userData.lastSeen
+        }));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [initialOtherUser?.uid]);
+
+  let status = '';
+  let statusClass = styles.userStatus;
+
+  if (typingUsers.length > 0) {
+    status = 'печатает';
+    statusClass += ' ' + styles.typingStatus;
+  } else if (otherUser?.lastSeen) {
+    const lastSeen = otherUser.lastSeen?.toDate?.() || otherUser.lastSeen;
+    const now = new Date();
+    const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
+
+    if (diffMinutes < 5) {
+      status = 'в сети';
+      statusClass += ' ' + styles.onlineStatus;
+    } else {
+      status = 'был(а) недавно';
+    }
+  }
 
   const handleClick = () => {
     if (otherUser?.isGroup && otherUser?.id) {
@@ -14,31 +57,43 @@ const ChatHeader = ({ otherUser }) => {
     }
   };
 
+  const displayUser = otherUser || initialOtherUser;
+
   return (
     <div
       className={styles.header}
       onClick={handleClick}
-      style={{ cursor: otherUser?.isGroup ? "pointer" : "default" }}
+      style={{ cursor: displayUser?.isGroup ? "pointer" : "default" }}
     >
-      {otherUser?.isGroup ? (
+      {displayUser?.isGroup ? (
         <>
-          <div className={styles.avatar}>
-            <MultiAvatar users={otherUser.members.slice(0, 4)} size={40} />
+          <div className={styles.avatar} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
+            <MultiAvatar users={displayUser.members?.slice(0, 4)} size={40} />
           </div>
-          <div className={styles.userName}>
-            {otherUser.displayName || "Группа"}
+          <div className={styles.userName} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
+            {displayUser.displayName || "Группа"}
           </div>
         </>
       ) : (
         <>
           <img
-            src={otherUser?.photoURL || "/default-avatar.png"}
+            src={displayUser?.photoURL || "/default-avatar.png"}
             alt="Avatar"
             className={styles.avatar}
+            onClick={onAvatarOrNameClick}
+            style={{ cursor: 'pointer' }}
           />
-          <span className={styles.userName}>
-            {otherUser?.displayName || "Собеседник"}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className={styles.userName} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
+              {displayUser?.displayName || "Собеседник"}
+            </span>
+            {status && (
+              <span className={statusClass}>
+                {status}
+                {typingUsers.length > 0 && <LoadingDots />}
+              </span>
+            )}
+          </div>
         </>
       )}
     </div>

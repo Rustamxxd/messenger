@@ -20,6 +20,9 @@ const Message = ({
 }) => {
   const [editedText, setEditedText] = useState(message.text);
   const textareaRef = useRef(null);
+  const [videoDuration, setVideoDuration] = useState(null);
+  const videoRef = useRef(null);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
 
   useEffect(() => {
     if (isEditing) {
@@ -54,6 +57,19 @@ const Message = ({
       minute: "2-digit",
     });
   };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setVideoDuration(videoRef.current.duration);
+    }
+  };
+
+  function formatDuration(seconds) {
+    if (!seconds) return null;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
 
   return (
     <div
@@ -128,22 +144,43 @@ const Message = ({
                     })
                   }
                 >
-                  {message.fileType === "image" && (
+                  {message.fileType === "image" && message.text && (
                     <img src={message.text} alt="image" className="thumb" />
                   )}
-                  {message.fileType === "video" && (
-                    <video
-                      src={message.text}
-                      className="thumb"
-                      muted
-                      playsInline
-                    />
+                  {message.fileType === "video" && message.text && (
+                    <div className={styles.videoPreviewWrapper}>
+                      <video
+                        ref={videoRef}
+                        src={message.text}
+                        className="thumb"
+                        muted
+                        preload="metadata"
+                        onLoadedMetadata={handleLoadedMetadata}
+                        autoPlay
+                        loop
+                        onTimeUpdate={() => {
+                          if (videoRef.current) setVideoCurrentTime(videoRef.current.currentTime);
+                        }}
+                      />
+                      {videoDuration && (
+                        <span className={styles.videoDuration}>{formatDuration(Math.max(0, videoDuration - videoCurrentTime))}</span>
+                      )}
+                    </div>
+                  )}
+                  {message.caption && (
+                    <div className={styles.caption}>{message.caption}</div>
+                  )}
+                  {!message.caption && message.text && !["image", "video", "audio"].includes(message.fileType) && (
+                    <div className={styles.caption}>{message.text}</div>
                   )}
                 </div>
               )}
 
               {message.fileType === "audio" && (
-                <VoiceMessagePlayer src={message.text} />
+                <>
+                  <VoiceMessagePlayer src={message.text} />
+                  {message.caption && <div className={styles.caption}>{message.caption}</div>}
+                </>
               )}
 
               {!message.fileType && (

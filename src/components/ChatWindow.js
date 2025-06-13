@@ -8,8 +8,10 @@ import ContextMenu from "./ContextMenu";
 import MediaViewer from "./MediaViewer";
 import { IoArrowDown } from "react-icons/io5";
 import { useChat } from "@/hooks/useChat";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { doc, updateDoc, arrayUnion, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import ProfileSidebar from './ProfileSidebar';
 
 const ChatWindow = ({ chatId }) => {
   const {
@@ -32,11 +34,14 @@ const ChatWindow = ({ chatId }) => {
   const [modalMedia, setModalMedia] = useState(null);
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const user = useSelector((state) => state.user.user);
   const scrollPositionRef = useRef({});
+
+  useOnlineStatus(user?.uid);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -217,74 +222,83 @@ const ChatWindow = ({ chatId }) => {
     }
   }, [filteredMessages, user?.uid]);
 
+  // Функция для передачи в ChatHeader
+  const handleHeaderClick = () => setSidebarOpen(true);
+
   return (
-    <div className={styles.chatWindow}>
-      <ChatHeader otherUser={otherUser} />
-
-      <MessageList
-        messages={filteredMessages}
-        userId={user?.uid}
-        typingUsers={typingUsers}
-        onContextMenu={handleContextMenu}
-        onReply={handleReply}
-        onReplyClick={handleReplyClick}
-        onDelete={handleDeleteMessage}
-        onHide={handleHideMessage}
-        setModalMedia={setModalMedia}
-        onUpdateMessage={(id, newText) => updateMessage(id, newText)}
-        editingMessageId={editingMessageId}
-        setEditingMessageId={setEditingMessageId}
-      />
-
-      {modalMedia && (
-        <MediaViewer
-          files={modalMedia.files}
-          initialIndex={modalMedia.initialIndex}
-          onClose={() => setModalMedia(null)}
+    <div className={styles.windowWrapper + (sidebarOpen ? ' ' + styles.sidebarOpen : '')}>
+      <ProfileSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} user={otherUser} />
+      <div className={styles.chatMain}>
+        <ChatHeader
+          otherUser={otherUser}
+          typingUsers={typingUsers}
+          onAvatarOrNameClick={handleHeaderClick}
         />
-      )}
-
-      <button
-        className={`${styles.scrollDownBtn} ${!isScrolledUp ? styles.scrollDownBtnHidden : ''}`}
-        onClick={() => {
-          const el = document.querySelector(`.${styles.messages}`);
-          el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-        }}
-      >
-        <IoArrowDown className={styles.arrowDown} />
-      </button>
-      <div className={`${styles.shadowTopWrapper} ${!isScrolledUp ? styles.shadowTopWrapperHidden : ''}`}>
-        <div className={styles.shadowTop} />
-      </div>
-
-      <ChatInput
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        sendMessage={sendMessage}
-        handleInputChange={handleInputChange}
-        showEmoji={showEmoji}
-        setShowEmoji={setShowEmoji}
-        handleEmojiClick={(emoji) => setNewMessage((prev) => prev + emoji.emoji)}
-        handleFileChange={handleFileChange}
-        file={file}
-        setFile={setFile}
-        replyTo={replyTo}
-        setReplyTo={setReplyTo}
-      />
-
-      {contextMenu.visible && (
-        <ContextMenu
-          contextMenu={contextMenu}
-          selectedMessage={selectedMessage}
-          onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+        <MessageList
+          messages={filteredMessages}
+          userId={user?.uid}
+          typingUsers={typingUsers}
+          onContextMenu={handleContextMenu}
           onReply={handleReply}
-          onEdit={(msg) => setEditingMessageId(msg.id)}
+          onReplyClick={handleReplyClick}
           onDelete={handleDeleteMessage}
           onHide={handleHideMessage}
+          setModalMedia={setModalMedia}
+          onUpdateMessage={(id, newText) => updateMessage(id, newText)}
+          editingMessageId={editingMessageId}
+          setEditingMessageId={setEditingMessageId}
         />
-      )}
 
-      <div ref={messagesEndRef} />
+        {modalMedia && (
+          <MediaViewer
+            files={modalMedia.files}
+            initialIndex={modalMedia.initialIndex}
+            onClose={() => setModalMedia(null)}
+          />
+        )}
+
+        <button
+          className={`${styles.scrollDownBtn} ${!isScrolledUp ? styles.scrollDownBtnHidden : ''}`}
+          onClick={() => {
+            const el = document.querySelector(`.${styles.messages}`);
+            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+          }}
+        >
+          <IoArrowDown className={styles.arrowDown} />
+        </button>
+        <div className={`${styles.shadowTopWrapper} ${!isScrolledUp ? styles.shadowTopWrapperHidden : ''}`}>
+          <div className={styles.shadowTop} />
+        </div>
+
+        <ChatInput
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          sendMessage={sendMessage}
+          handleInputChange={handleInputChange}
+          showEmoji={showEmoji}
+          setShowEmoji={setShowEmoji}
+          handleEmojiClick={(emoji) => setNewMessage((prev) => prev + emoji.emoji)}
+          handleFileChange={handleFileChange}
+          file={file}
+          setFile={setFile}
+          replyTo={replyTo}
+          setReplyTo={setReplyTo}
+        />
+
+        {contextMenu.visible && (
+          <ContextMenu
+            contextMenu={contextMenu}
+            selectedMessage={selectedMessage}
+            onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+            onReply={handleReply}
+            onEdit={(msg) => setEditingMessageId(msg.id)}
+            onDelete={handleDeleteMessage}
+            onHide={handleHideMessage}
+          />
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 };

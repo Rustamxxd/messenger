@@ -8,17 +8,20 @@ import { doc, deleteDoc } from "firebase/firestore";
 import { auth, db, uploadAvatar, updateUserProfile as updateFirebaseProfile } from "../lib/firebase";
 import { logout, updateUserProfile as updateReduxProfile } from "@/app/store/userSlice";
 import { Modal, message } from "antd";
-import { MdDeleteOutline, MdAddAPhoto } from "react-icons/md";
-import { FaRegSave } from "react-icons/fa";
-import { CiLogout } from "react-icons/ci";
+import { MdDeleteOutline } from "react-icons/md";
+import { FaRegSave, FaCamera } from "react-icons/fa";
+import { IoExitOutline } from "react-icons/io5";
 import styles from "@/styles/EditProfile.module.css";
+import LoadingDots from "./LoadingDots";
+
+import * as Yup from "yup";
+import { useFormik } from "formik";
 
 export default function EditProfile() {
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
-  const [displayName, setDisplayName] = useState("");
-  const [about, setAbout] = useState("");
+
   const [avatar, setAvatar] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,52 +30,63 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (user) {
-      setDisplayName(user.displayName || "");
-      setAbout(user.about || "");
       setPreview(user.photoURL || null);
     }
   }, [user]);
+
+  const validationSchema = Yup.object({
+    displayName: Yup.string()
+      .required("Имя обязательно")
+      .max(20, "Максимум 20 символов"),
+    about: Yup.string().max(200, "Максимум 200 символов"),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      displayName: user?.displayName || "",
+      about: user?.about || "",
+    },
+    enableReinitialize: true,
+    validationSchema,
+    onSubmit: async (values) => {
+      if (!user) return;
+      setLoading(true);
+
+      try {
+        let avatarUrl = user.photoURL;
+
+        if (avatar) {
+          avatarUrl = await uploadAvatar(avatar);
+        }
+
+        await updateFirebaseProfile(user.uid, {
+          displayName: values.displayName,
+          about: values.about,
+          photoURL: avatarUrl,
+        });
+
+        dispatch(updateReduxProfile({
+          displayName: values.displayName,
+          about: values.about,
+          photoURL: avatarUrl,
+        }));
+
+        setSuccessMessage("Профиль успешно обновлён!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } catch (error) {
+        console.error("Ошибка обновления профиля:", error);
+        setSuccessMessage("Ошибка при сохранении");
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setAvatar(file);
       setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSaveChanges = async () => {
-    if (!user) return;
-    setLoading(true);
-  
-    try {
-      let avatarUrl = user.photoURL;
-  
-      if (avatar) {
-        avatarUrl = await uploadAvatar(avatar);
-      }
-  
-      await updateFirebaseProfile(user.uid, {
-        displayName: displayName,
-        about,
-        photoURL: avatarUrl,
-      });
-  
-      dispatch(updateReduxProfile({
-        displayName: displayName,
-        about,
-        photoURL: avatarUrl,
-      }));
-  
-      setSuccessMessage("Профиль успешно обновлён!");
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
-    } catch (error) {
-      console.error("Ошибка обновления профиля:", error);
-      setSuccessMessage("Ошибка при сохранении");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -85,8 +99,8 @@ export default function EditProfile() {
       console.error("Ошибка при выходе:", error);
     }
   };
-  
- const showDeleteModal = () => setIsDeleteModalVisible(true);
+
+  const showDeleteModal = () => setIsDeleteModalVisible(true);
   const handleCancelDelete = () => setIsDeleteModalVisible(false);
 
   const handleConfirmDelete = async () => {
@@ -96,7 +110,7 @@ export default function EditProfile() {
       await deleteUser(auth.currentUser);
 
       dispatch(logout());
-      router.push("/register");
+      router.push("/login");
 
       message.success("Аккаунт удалён");
     } catch (error) {
@@ -107,8 +121,6 @@ export default function EditProfile() {
     }
   };
 
-
-
   return (
     <div className={styles.container}>
       {successMessage && <p className={styles.successMessage}>{successMessage}</p>}
@@ -116,38 +128,60 @@ export default function EditProfile() {
       <h1 className={styles.title}>Редактировать профиль</h1>
 
       <div className={styles.avatarWrapper}>
-        {preview && <img src={preview} className={styles.avatar} />}
+        <img src={preview} alt="Avatar" className={styles.avatar} />
         <label className={styles.uploadLabel}>
-        <input type="file" onChange={handleAvatarChange} accept="image/*" hidden />
-      <MdAddAPhoto />  Выбрать аватар
-      </label>
+          <FaCamera />
+          Изменить фото
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            style={{ display: "none" }}
+          />
+        </label>
       </div>
 
-      <input
-        type="text"
-        placeholder="Никнейм"
-        value={displayName}
-        onChange={(e) => setDisplayName(e.target.value)}
-        className={styles.input}
-      />
+      <form onSubmit={formik.handleSubmit} className={styles.form}>
+      {formik.touched.displayName && formik.errors.displayName && (
+          <div className={styles.error}>{formik.errors.displayName}</div>
+        )}
+        <input
+          type="text"
+          name="displayName"
+          value={formik.values.displayName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          placeholder="Имя пользователя"
+          maxLength={20}
+          className={styles.input}
+        />
 
-      <textarea
-        placeholder="О себе"
-        value={about}
-        onChange={(e) => setAbout(e.target.value)}
-        className={styles.textarea}
-      />
+        {formik.touched.about && formik.errors.about && (
+          <div className={styles.error}>{formik.errors.about}</div>
+        )}
+        
+        <textarea
+          name="about"
+          placeholder="О себе"
+          value={formik.values.about}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          className={styles.textarea}
+        />
+        
 
-      <button
-        onClick={handleSaveChanges}
-        disabled={loading}
-        className={styles.button}
-      >
-        <FaRegSave /> {loading ? "Сохранение..." : "Сохранить"}
-      </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className={styles.button}
+        >
+          <FaRegSave /> {loading ? "Сохранение" : "Сохранить"}
+          {loading && <LoadingDots />}
+        </button>
+      </form>
 
       <button onClick={handleLogout} className={styles.logoutButton}>
-        <CiLogout /> Выйти
+        <IoExitOutline /> Выйти
       </button>
 
       <button onClick={showDeleteModal} className={styles.deleteButton}>
@@ -163,9 +197,11 @@ export default function EditProfile() {
         cancelText="Отмена"
         okButtonProps={{ danger: true }}
       >
-        <p className={styles.confirm}>Вы уверены, что хотите удалить аккаунт? <br></br> Это действие необратимо.</p>
+        <p className={styles.confirm}>
+          Вы уверены, что хотите удалить аккаунт? <br />
+          Это действие необратимо.
+        </p>
       </Modal>
-
     </div>
   );
 }

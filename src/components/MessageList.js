@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import styles from "@/styles/ChatWindow.module.css";
 
@@ -16,6 +16,32 @@ const MessageList = ({
   editingMessageId,
   setEditingMessageId,
 }) => {
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const prevMessagesCount = useRef(messages.length);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      setIsAtBottom(atBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const newMessageAdded = messages.length > prevMessagesCount.current;
+    if (isAtBottom && newMessageAdded) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevMessagesCount.current = messages.length;
+  }, [messages, isAtBottom]);
+
   const allMedia = messages
     .filter((m) => ["image", "video"].includes(m.fileType))
     .map((m) => ({
@@ -24,7 +50,7 @@ const MessageList = ({
     }));
 
   return (
-    <div className={styles.messages}>
+    <div className={styles.messages} ref={messagesContainerRef}>
       <div className={styles.messageColumn}>
         {messages.length === 0 && (
           <div className={styles.empty}>Нет сообщений</div>
@@ -85,12 +111,7 @@ const MessageList = ({
             </React.Fragment>
           );
         })}
-
-        {typingUsers.length > 0 && (
-          <div className={styles.typingStatus}>
-            {typingUsers[0]} печатает<span className={styles.dots}></span>
-          </div>
-        )}
+        <div ref={messagesEndRef} />
       </div>
     </div>
   );

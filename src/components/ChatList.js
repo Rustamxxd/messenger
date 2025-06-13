@@ -9,10 +9,10 @@ import { useUsers } from '@/hooks/useUsers';
 import { formatDate } from '../../utils/dateUtils';
 import styles from '@/styles/ChatList.module.css';
 import { IoIosSearch, IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { FaPen, FaUsers } from 'react-icons/fa';
+import { FaPen, FaUsers, FaLink } from 'react-icons/fa';
+import { RiFileMusicLine } from "react-icons/ri";
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlinePlus } from 'react-icons/hi';
-import { LuCheck, LuCheckCheck } from "react-icons/lu";
 import { Checkbox, Spin, Switch } from 'antd';
 import multiavatar from '@multiavatar/multiavatar';
 import UserAvatar from './UserAvatar';
@@ -32,6 +32,7 @@ export default function ChatList({ onSelectChat }) {
   const contextMenuRef = useRef(null);
   const [chatData, setChatData] = useState({});
   const { isDark, toggleTheme } = useTheme();
+  const menuRef = useRef(null);
 
   const user = useSelector((state) => state.user.user);
   const router = useRouter();
@@ -57,7 +58,9 @@ export default function ChatList({ onSelectChat }) {
 
       return onSnapshot(q, (snapshot) => {
         const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const lastMessage = messages[0];
+        const lastMessage = messages.find(
+          msg => !msg.deletedFor || !msg.deletedFor.includes(user.uid)
+        );
 
         let unreadCount = 0;
         messages.forEach((msg) => {
@@ -133,6 +136,34 @@ export default function ChatList({ onSelectChat }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  function getMessagePreview(msg, isSelected) {
+    if (!msg) return { text: '', thumb: null };
+    if (msg.fileType === 'image' && msg.text) return {
+      text: 'Фото',
+      thumb: <img src={msg.text} alt="img" className={styles.miniThumb} />
+    };
+    if (msg.fileType === 'video' && msg.text) return {
+      text: 'Видео',
+      thumb: <video src={msg.text} className={styles.miniThumb} muted playsInline preload="metadata" />
+    };
+    if (msg.fileType === 'audio') return { text: 'Голос', thumb: <RiFileMusicLine className={isSelected ? styles.miniIconSelected : styles.miniIcon} /> };
+    if (msg.text && /(https?:\/\/[^\s]+)/.test(msg.text)) return { text: 'Ссылка', thumb: <FaLink className={isSelected ? styles.miniIconSelected : styles.miniIcon} /> };
+    return { text: msg.text || '', thumb: null };
+  }
+
   return (
     <div
       className={`${styles.chatListContainer} ${menuOpen ? styles.menuOpen : ''}`}
@@ -160,7 +191,7 @@ export default function ChatList({ onSelectChat }) {
       </div>
 
       {menuOpen && (
-        <div className={styles.menu}>
+        <div className={styles.menu} ref={menuRef}>
           <div className={styles.profileSection} onClick={() => router.push('/profile')}>
             <div className={styles.profileInfo}>
               <div className={styles.avatarMenu}>
@@ -169,6 +200,8 @@ export default function ChatList({ onSelectChat }) {
               <span className={styles.displayName}>{user?.displayName}</span>
             </div>
           </div>
+
+          <div className={styles.borderBottom}/>
 
           <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
             <FaPen /> Новое сообщение
@@ -185,13 +218,13 @@ export default function ChatList({ onSelectChat }) {
           <div className={styles.menuItem}>
             <BsMoonStarsFill className={styles.icon} />
             <span className={styles.label}>Ночная тема</span>
-          </div>
           <Switch
             checked={isDark}
             onChange={toggleTheme}
             className={styles.themeSwitch}
             size="small"
-          />
+            />
+            </div>
         </div>
       )}
 
@@ -270,6 +303,8 @@ export default function ChatList({ onSelectChat }) {
               const data = chatData[chat.id] || {};
               const lastMessage = data.lastMessage || chat.lastMessage;
               const unreadCount = data.unreadCount ?? chat.unreadCount;
+              const isSelected = chat.id === activeChatId;
+              const preview = getMessagePreview(lastMessage, isSelected);
               return (
                 <div
                   key={chat.id}
@@ -291,8 +326,9 @@ export default function ChatList({ onSelectChat }) {
                     <p className={styles.chatName}>{chat.displayName}</p>
                     <div className={styles.lastMessageContainer}>
                       <p className={styles.lastMessage}>
+                        {preview.thumb && <span className={styles.lastMessageThumb}>{preview.thumb}</span>}
                         {chat.isGroup && lastMessage?.senderName ? `${lastMessage.senderName}: ` : ''}
-                        {lastMessage?.text}
+                        {preview.text}
                       </p>
                     </div>
                   </div>

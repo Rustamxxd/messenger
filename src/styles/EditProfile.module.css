@@ -1,17 +1,23 @@
 .container {
-  position: absolute;
-  left: 37%;
+  position: relative;
   top: 10%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 500px;
+  width: 100%;
+  max-width: 500px;
   margin: 0 auto;
   padding: 20px;
   border-radius: 12px;
   background: #f9f9f9;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .title {
@@ -39,27 +45,34 @@
 }
 
 .input,
-.textarea {
+.textarea,
+.button,
+.logoutButton,
+.deleteButton {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 16px;
-  border: 1px solid #ccc;
+  margin: 10px 0;
+  padding: 12px 16px;
+  font-size: 16px;
   border-radius: 8px;
-  font-size: 14px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  display: block;
+  font-family: inherit;
+}
+
+.input {
+  background: white;
 }
 
 .textarea {
-  height: 80px;
   resize: none;
+  height: 100px;
 }
 
 .button {
-  width: 100%;
-  padding: 12px;
   background-color: #0088cc;
   color: white;
   border: none;
-  border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s ease;
@@ -73,50 +86,25 @@
 .button:hover:not(:disabled) {
   background-color: #006da8;
 }
+
 .logoutButton {
-  width: 100%;
-  margin-top: 12px;
-  padding: 12px;
   background-color: #d11616;
   color: white;
   border: none;
-  border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s ease;
 }
 
 .logoutButton:hover {
   background-color: #c9302c;
 }
 
-.successMessage {
-  text-align: center;
-  animation: fade-in-out 3s ease-in-out forwards;
-  color: green;
-  margin-top: 10px;
-  font-weight: 500;
-}
-
-@keyframes fade-in-out {
-  0% { opacity: 0; transform: translateY(-10px); }
-  10% { opacity: 1; transform: translateY(0); }
-  90% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-10px); }
-}
-
 .deleteButton {
-  width: 200px;
-  background: transparent;
+  background-color: darkred;
   color: whitesmoke;
-  background: darkred;
-  padding: 8px;
-  margin-top: 10px;
-  border-radius: 8px;
   font-weight: bold;
-  width: 100%;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .deleteButton:hover {
@@ -129,12 +117,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  font-size: 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, 0.2s ease-in-out;
+  transition: background-color 0.2s ease, transform 0.2s ease-in-out;
 }
 
 .button:hover,
@@ -146,12 +129,7 @@
 .button svg,
 .logoutButton svg,
 .deleteButton svg {
-  font-size: 19px;
-}
-
-.confirm {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 23px;
 }
 
 .uploadLabel {
@@ -163,10 +141,10 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease, 0.2s ease-in-out;
   color: white;
   font-weight: bold;
   background: teal;
+  transition: background-color 0.2s ease, transform 0.2s ease-in-out;
 }
 
 .uploadLabel svg {
@@ -176,4 +154,43 @@
 .uploadLabel:hover {
   background-color: rgb(34, 116, 107);
   transform: scale(1.03);
+}
+
+.successMessage {
+  text-align: center;
+  animation: fade-in-out 3s ease-in-out forwards;
+  color: green;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+@keyframes fade-in-out {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+.confirm {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.errorBox {
+  background-color: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 4px;
 }

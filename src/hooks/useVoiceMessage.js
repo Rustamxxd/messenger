@@ -10,7 +10,7 @@ export const useVoiceMessage = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new window.MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -34,7 +34,7 @@ export const useVoiceMessage = () => {
   };
 
   const stopRecording = (onStop) => {
-    if (mediaRecorderRef.current?.state === "recording") {
+    if (isRecording && mediaRecorderRef.current?.state === "recording") {
       onStopCallbackRef.current = onStop;
       mediaRecorderRef.current.stop();
       setIsRecording(false);

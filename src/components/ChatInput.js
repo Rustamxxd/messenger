@@ -69,6 +69,7 @@ const ChatInput = ({
     setFile?.(null);
     setReplyTo(null);
     setNewMessage("");
+    reset();
   };
 
   const handleCancelMedia = () => {
@@ -78,25 +79,34 @@ const ChatInput = ({
   };
 
   const handleSend = async () => {
-  const hasText = newMessage.trim().length > 0;
-  const hasVoice = Boolean(audioBlob);
-  const hasFile = Boolean(file);
+    const hasText = newMessage.trim().length > 0;
+    const hasVoice = Boolean(audioBlob);
+    const hasFile = Boolean(file);
 
-  if (!hasText && !hasVoice && !hasFile) return;
+    if (!hasText && !hasVoice && !hasFile) return;
 
-  if (hasVoice) {
-    const voiceFile = new File([audioBlob], 'voice.webm', { type: 'audio/webm' });
-    await sendMessage(newMessage.trim(), voiceFile, replyTo);
-  } else {
-    await sendMessage(newMessage.trim(), file, replyTo);
-  }
+    // Сбросить UI сразу!
+    setNewMessage("");
+    setFile?.(null);
+    setPendingFile?.(null);
+    setReplyTo(null);
+    reset();
+    setShowMediaModal(false);
+    setSeconds(0);
 
-  setNewMessage("");
-  setFile?.(null);
-  setReplyTo(null);
-  reset();
-  setSeconds(0);
-};
+    try {
+      if (hasVoice) {
+        const voiceFile = new File([audioBlob], 'voice.webm', { type: 'audio/webm' });
+        sendMessage(newMessage.trim(), voiceFile, replyTo); // не await!
+      } else if (hasFile) {
+        sendMessage(newMessage.trim(), file, replyTo);
+      } else {
+        sendMessage(newMessage.trim(), null, replyTo);
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке:', error);
+    }
+  };
 
   const showSend = !!(newMessage.trim() || file || audioBlob);
 
@@ -158,7 +168,14 @@ const ChatInput = ({
         <textarea
           value={newMessage}
           onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !isRecording) {
+              e.preventDefault();
+              handleSend();
+            } else {
+              handleKeyDown?.(e);
+            }
+          }}
           placeholder="Сообщение"
           className={isRecording ? styles.shrinkedTextarea : ""}
         />
@@ -185,12 +202,19 @@ const ChatInput = ({
         className={styles.sendButton}
         onClick={() => {
           if (isRecording) {
-            stopRecording(async (blob) => {
-              const voiceFile = new File([blob], "voice.webm", { type: "audio/webm" });
-              await sendMessage(newMessage.trim(), voiceFile);
+            stopRecording((blob) => {
+              if (!blob) return;
+              // Сбросить UI сразу!
               reset();
               setSeconds(0);
               setNewMessage("");
+              setFile?.(null);
+              setPendingFile?.(null);
+              setReplyTo(null);
+              setShowMediaModal(false);
+
+              const voiceFile = new File([blob], "voice.webm", { type: "audio/webm" });
+              sendMessage(newMessage.trim(), voiceFile, replyTo);
             });
           } else if (newMessage.trim() || file) {
             handleSend();

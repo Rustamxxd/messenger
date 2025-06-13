@@ -103,3 +103,21 @@
   object-fit: cover;
 }
 
+.errorMessage {
+  display: inline-block;
+  position: relative;
+  top: -5px;
+  background-color: #fff1f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+  padding: 12px 10px;
+  margin-bottom: 0px;
+  border-radius: 8px;
+  font-weight: 500;
+  animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

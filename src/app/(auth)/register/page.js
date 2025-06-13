@@ -6,7 +6,11 @@ import { auth, registerUser } from "@/lib/firebase";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/app/store/userSlice";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import styles from "@/styles/LoginPage.module.css";
+import { FaGoogle } from "react-icons/fa";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
@@ -19,32 +23,52 @@ export default function RegisterPage() {
   const dispatch = useDispatch();
   const router = useRouter();
 
+  const validateForm = () => {
+    if (!displayName || displayName.trim().length === 0) {
+      return "Имя пользователя обязательно.";
+    }
+    if (displayName.length > 20) {
+      return "Имя не должно превышать 20 символов.";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return "Введите корректный email.";
+    }
+    if (!password || password.length < 6) {
+      return "Пароль должен содержать минимум 6 символов.";
+    }
+    return null;
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-  
-    if (!displayName) {
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       setLoading(false);
-      setError("Имя пользователя обязательно");
       return;
     }
-  
+
     try {
       const user = await registerUser(email, password, displayName);
-  
+
       const userData = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL || "",
       };
-  
+
       dispatch(setUser(userData));
       router.push("/chat");
     } catch (err) {
       console.error("Ошибка при регистрации:", err);
-      if (err.code === "auth/invalid-email") {
+      if (err.code === "auth/email-already-in-use") {
+        setError("Этот email уже зарегистрирован.");
+      } else if (err.code === "auth/invalid-email") {
         setError("Неверный формат email.");
       } else if (err.code === "auth/weak-password") {
         setError("Пароль слишком слабый.");
@@ -57,24 +81,36 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
+      setGoogleLoading(true);
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log("Пользователь авторизован через Google:", user);
 
-      const userData = {
+      const now = new Date();
+      
+      // Создаем документ пользователя в Firestore
+      await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      };
-      dispatch(setUser(userData));
+        displayName: user.displayName || user.email.split('@')[0],
+        photoURL: user.photoURL || null,
+        lastSeen: now,
+        createdAt: serverTimestamp()
+      });
+
+      dispatch(setUser({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email.split('@')[0],
+        photoURL: user.photoURL || null,
+        lastSeen: now
+      }));
+
       router.push("/chat");
     } catch (error) {
-      console.error("Ошибка при регистрации через Google:", error);
-      setError("Ошибка при регистрации через Google.");
+      console.error("Ошибка при входе через Google:", error);
+      setError("Ошибка при входе через Google");
     } finally {
       setGoogleLoading(false);
     }
@@ -84,7 +120,13 @@ export default function RegisterPage() {
     <div className={styles.container}>
       <div className={styles.formContainer}>
         <h1 className={styles.title}>Регистрация</h1>
-        {error && <p className={styles.errorMessage}>{error}</p>}
+
+        {error && (
+          <div style={{ textAlign: "center" }}>
+            <p className={styles.errorMessage}>{error}</p>
+          </div>
+        )}
+
 
         <form onSubmit={handleRegister} className={styles.form}>
           <input
@@ -93,6 +135,7 @@ export default function RegisterPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             className={styles.input}
+            maxLength={20}
             required
           />
           <input
@@ -113,10 +156,11 @@ export default function RegisterPage() {
           />
           <button
             type="submit"
+            className={styles.button}
             disabled={loading}
-            className={`${styles.button} ${loading ? styles.loading : ""}`}
           >
-            {loading ? "Загрузка..." : "Зарегистрироваться"}
+            {loading ? "Регистрация" : "Зарегистрироваться"}
+            {loading && <LoadingDots />}
           </button>
         </form>
 
@@ -127,14 +171,19 @@ export default function RegisterPage() {
         </div>
 
         <button
+          type="button"
           onClick={handleGoogleLogin}
           className={`${styles.button} ${styles.googleButton}`}
           disabled={googleLoading}
         >
-          {googleLoading ? "Загрузка..." : (
+          {googleLoading ? (
+            <>
+              Регистрация<LoadingDots />
+            </>
+          ) : (
             <>
               <img
-                src="https://auth.openai.com/assets/google-logo-NePEveMl.svg"
+                src="/assets/google-icon.png"
                 alt="Google"
                 className={styles.googleIcon}
               />

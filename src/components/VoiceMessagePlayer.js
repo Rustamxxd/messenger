@@ -27,14 +27,14 @@ const VoiceMessagePlayer = ({ src }) => {
     const initWaveSurfer = async () => {
       try {
         wavesurfer = WaveSurfer.create({
-        container: containerRef.current,
-        waveColor: "#ccc",
-        progressColor: "#3ba55d",
-        barWidth: 2,
-        height: 40,
-        interact: true,
-        normalize: true,
-        splitChannels: true,
+          container: containerRef.current,
+          waveColor: "#ccc",
+          progressColor: "#3ba55d",
+          barWidth: 2,
+          height: 40,
+          interact: true,
+          normalize: true,
+          splitChannels: true,
         });
 
         wavesurfer.load(src);
@@ -64,8 +64,15 @@ const VoiceMessagePlayer = ({ src }) => {
 
     return () => {
       try {
-        wavesurfer?.destroy();
+        if (wavesurferRef.current) {
+          wavesurferRef.current.destroy();
+          wavesurferRef.current = null;
+        }
       } catch (err) {
+        if (err?.message?.includes('signal is aborted')) {
+          // Игнорируем эту ошибку
+          return;
+        }
         console.warn("WaveSurfer destroy failed", err);
       }
     };

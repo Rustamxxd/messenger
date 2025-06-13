@@ -91,7 +91,7 @@ if (!currentFile) return null;
               src={currentFile.url}
               controls
               autoPlay
-              className={styles.media}
+              className={`${styles.media} ${styles.mediaVideo}`}
             />
           ) : (
             <img
@@ -112,14 +112,29 @@ if (!currentFile) return null;
       </div>
 
       <div className={styles.thumbnailBar}>
-        {files.map((file, index) => (
-          <img
-            key={index}
-            src={file.url}
-            className={`${styles.thumb} ${index === currentIndex ? styles.active : ""}`}
-            onClick={() => setCurrentIndex(index)}
-          />
-        ))}
+        {files.map((file, index) =>
+          file.url ? (
+            file.type === "video"
+              ? (
+                <video
+                  key={index}
+                  src={file.url}
+                  className={styles.thumb}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  onClick={() => setCurrentIndex(index)}
+                />
+              ) : (
+                <img
+                  key={index}
+                  src={file.url}
+                  className={`${styles.thumb} ${index === currentIndex ? styles.active : ""}`}
+                  onClick={() => setCurrentIndex(index)}
+                />
+              )
+          ) : null
+        )}
       </div>
     </div>
   );
