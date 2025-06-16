@@ -20,7 +20,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { BsMoonStarsFill } from "react-icons/bs";
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
+import { IoCheckmark, IoCheckmarkDone, IoExitOutline } from "react-icons/io5";
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ChatList({ onSelectChat }) {
   const [search, setSearch] = useState('');
@@ -48,6 +49,8 @@ export default function ChatList({ onSelectChat }) {
     toggleUser,
     handleDeleteChat
   } = useChatActions(user, onSelectChat);
+
+  const { logout } = useAuth();
 
   useEffect(() => {
     if (!user || !chats.length) return;
@@ -139,7 +142,7 @@ export default function ChatList({ onSelectChat }) {
   useEffect(() => {
     if (!menuOpen) return;
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      if (menuRef.current && !menuRef.current.contains(e.target) && !e.target.closest(`.${styles.hamburger}`)) {
         setMenuOpen(false);
       }
     };
@@ -171,11 +174,24 @@ export default function ChatList({ onSelectChat }) {
     >
       <div id="resizer" className={styles.resizer} />
 
-      <div className={styles.header}>
-        <div className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)}>
-          <div className={styles.bar}></div>
-          <div className={styles.bar}></div>
-          <div className={styles.bar}></div>
+      <div className={`${styles.header} ${mode ? styles.modeActive : ''}`}>
+        <div className={styles.headerLeft}>
+          <div
+            className={styles.hamburger}
+            onClick={!mode ? () => setMenuOpen(prevState => !prevState) : undefined}
+            style={{ pointerEvents: !mode ? 'auto' : 'none' }}
+          >
+            <div className={styles.bar}></div>
+            <div className={styles.bar}></div>
+            <div className={styles.bar}></div>
+          </div>
+          <div
+            className={styles.backButton}
+            onClick={mode ? () => { setMode(null); setSelectedUsers([]); } : undefined}
+            style={{ pointerEvents: mode ? 'auto' : 'none' }}
+          >
+            <IoIosArrowBack />
+          </div>
         </div>
 
         <div className={styles.searchWrapper}>
@@ -190,49 +206,44 @@ export default function ChatList({ onSelectChat }) {
         </div>
       </div>
 
-      {menuOpen && (
-        <div className={styles.menu} ref={menuRef}>
-          <div className={styles.profileSection} onClick={() => router.push('/profile')}>
-            <div className={styles.profileInfo}>
-              <div className={styles.avatarMenu}>
-                <UserAvatar user={user} />
-              </div>
-              <span className={styles.displayName}>{user?.displayName}</span>
+      <div className={styles.menu} ref={menuRef}>
+        <div className={styles.profileSection} onClick={() => router.push('/profile')}>
+          <div className={styles.profileInfo}>
+            <div className={styles.avatarMenu}>
+              <UserAvatar user={user} />
             </div>
+            <span className={styles.displayName}>{user?.displayName}</span>
           </div>
-
-          <div className={styles.borderBottom}/>
-
-          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
-            <FaPen /> Новое сообщение
-          </div>
-
-          <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
-            <FaUsers /> Создать группу
-          </div>
-
-          <div className={styles.menuItem} onClick={() => router.push('/login')}>
-            <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
-          </div>
-
-          <div className={styles.menuItem}>
-            <BsMoonStarsFill className={styles.icon} />
-            <span className={styles.label}>Ночная тема</span>
-          <Switch
-            checked={isDark}
-            onChange={toggleTheme}
-            className={styles.themeSwitch}
-            size="small"
-            />
-            </div>
         </div>
-      )}
 
-      {mode && (
-        <div className={styles.backButton} onClick={() => { setMode(null); setSelectedUsers([]); }}>
-          <IoIosArrowBack />
+        <div className={styles.borderBottom}/>
+
+        <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('new'); }}>
+          <FaPen /> Новое сообщение
         </div>
-      )}
+
+        <div className={styles.menuItem} onClick={() => { setMenuOpen(false); setMode('group'); }}>
+          <FaUsers /> Создать группу
+        </div>
+
+        <div className={styles.menuItem} onClick={() => router.push('/login')}>
+          <HiOutlinePlus className={styles.plusIcon} /> Добавить аккаунт
+        </div>
+
+        <div className={styles.menuItem}>
+          <BsMoonStarsFill className={styles.icon} />
+          <span className={styles.label}>Ночная тема</span>
+        <Switch
+          checked={isDark}
+          onChange={toggleTheme}
+          className={styles.themeSwitch}
+          size="small"
+          />
+          </div>
+        <div className={styles.menuItem} onClick={async () => { await logout(); router.push('/login'); }}>
+        <IoExitOutline className={styles.exitIcon} style={{ color: '#e53935' }}/> <span style={{ color: '#e53935' }}>Выйти</span>
+        </div>
+      </div>
 
       {mode ? (
         <div className={styles.userList}>
@@ -333,7 +344,7 @@ export default function ChatList({ onSelectChat }) {
                     </div>
                   </div>
                   <div className={styles.chatTime}>
-                    {lastMessage?.sender === user.uid && (
+                    {user && lastMessage?.sender === user.uid && (
                       <span className={styles.readStatus}>
                         {lastMessage?.read ? <IoCheckmarkDone /> : <IoCheckmark />}
                       </span>

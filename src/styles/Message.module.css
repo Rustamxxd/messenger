@@ -88,6 +88,11 @@
   gap: 8px;
 }
 
+.edited {
+  font-size: 11px;
+  color: #888;
+}
+
 .saveButton,
 .cancelButton {
   padding: 4px 10px;

@@ -12,6 +12,7 @@
   top: 0;
   width: 1px;  
   height: 100%;
+  border-right: 1px solid #eee;
   cursor: ew-resize;
   background-color: transparent;
   z-index: 10;
@@ -23,6 +24,17 @@
   justify-content: space-between;
   margin-bottom: 16px;
   position: relative;
+  gap: 0;
+}
+
+.headerLeft {
+  width: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
 }
 
 .hamburger {
@@ -36,7 +48,6 @@
   transition: transform 0.3s ease;
 }
 
-
 .bar {
   height: 2px;
   background-color: grey;
@@ -46,9 +57,6 @@
 
 .hamburger:hover .bar {
   background-color: #0088cc;
-}
-
-.hamburger:hover {
   transform: scale(1.1);
 }
 
@@ -108,6 +116,16 @@
   border-radius: 8px;
   backdrop-filter: blur(5px);
   z-index: 2000;
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.menuOpen .menu {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 .menuItem {
@@ -192,7 +210,6 @@
  {
   color: white;
 }
-
 
 .chatName {
   font-weight: 600;
@@ -285,14 +302,15 @@
   background-color: #0088cc;
   color: white;
   cursor: pointer;
-  position: absolute;
+  position: sticky;
   bottom: 10px;
-  right: 10px;
+  right: 20px;
+  margin-left: auto;
   transition: 0.2s ease-in-out;
 }
 
 .continueButton:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .checkbox {
@@ -302,22 +320,26 @@
 }
 
 .backButton {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 23px;
-  background-color: #0088cc;
-  color: white;
+  position: static;
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: #888;
   cursor: pointer;
-  margin: 0  0 10px 15px;
-  transition: 0.1s ease-in-out;
+  z-index: 1;
+  border-radius: 50%;
+  margin-left: 12.09px;
+  transition: background 0.2s;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.backButton:hover {
-  transform: scale(1.1);
+.backButton:hover,
+.backButton:focus {
+  background: #f2f2f2;
 }
 
 .contextMenu {
@@ -332,8 +354,6 @@
   display: flex;
   flex-direction: column;
 }
-
-
 .contextMenuItem {
   color: #e53935;
   display: flex;
@@ -365,8 +385,8 @@
 .miniIcon {
   color: #888;
   font-size: 18px;
-
 }
+
 .miniIconSelected {
   color: #fff;
   font-size: 18px;
@@ -379,3 +399,91 @@
   margin-right: 6px;
 }
 
+.exitIcon {
+  font-size: 19px;
+}
+
+.exitIcon:hover {
+  transform: scale(1.1);
+}
+
+.userList {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  min-height: 0;
+  position: relative;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.chatList {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  min-height: 0;
+}
+
+.chatList,
+.userList,
+.profileSidebar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.18) transparent;
+}
+
+.chatList::-webkit-scrollbar,
+.userList::-webkit-scrollbar,
+.profileSidebar::-webkit-scrollbar {
+  width: 4px;
+  background: transparent;
+}
+
+.chatList::-webkit-scrollbar-thumb,
+.userList::-webkit-scrollbar-thumb,
+.profileSidebar::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.18);
+  border-radius: 8px;
+  min-height: 40px;
+  border: none;
+}
+
+.chatList::-webkit-scrollbar-thumb:hover,
+.userList::-webkit-scrollbar-thumb:hover,
+.profileSidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.28);
+}
+
+/* Анимация появления/исчезновения кнопок в headerLeft */
+.headerLeft .hamburger,
+.headerLeft .backButton {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.headerLeft .hamburger {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.headerLeft .backButton {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateY(-50%) translateX(-30px);
+}
+
+.modeActive .headerLeft .hamburger {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) translateX(30px);
+}
+
+.modeActive .headerLeft .backButton {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}

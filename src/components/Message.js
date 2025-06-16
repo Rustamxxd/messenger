@@ -190,9 +190,9 @@ const Message = ({
           )}
 
           <div className={styles.meta}>
+              {message.edited ? <span className={styles.edited}>изменено</span> : ""}
             <span className={styles.time}>
               {formatTime(message.timestamp)}{" "}
-              {message.edited ? "(изменено)" : ""}
             </span>
             {isOwn && !message.deleted && (
               <span className={styles.readStatus}>

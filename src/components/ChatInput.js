@@ -165,6 +165,10 @@ const ChatInput = ({
           </div>
         )}
 
+        <div
+          className={styles.animatedPlaceholder + (newMessage ? ' ' + styles.placeholderHidden : '')}
+        >Сообщение</div>
+
         <textarea
           value={newMessage}
           onChange={handleInputChange}
@@ -176,7 +180,7 @@ const ChatInput = ({
               handleKeyDown?.(e);
             }
           }}
-          placeholder="Сообщение"
+          placeholder=""
           className={isRecording ? styles.shrinkedTextarea : ""}
         />
 
@@ -223,7 +227,12 @@ const ChatInput = ({
           }
         }}
       >
-        {isRecording || showSend ? <IoSend className={styles.send}/> : <PiMicrophone />}
+        <span className={styles.iconSwitch + ((isRecording || showSend) ? ' ' + styles.iconSendActive : '')}>
+          <IoSend className={styles.send} />
+        </span>
+        <span className={styles.iconSwitch + (!(isRecording || showSend) ? ' ' + styles.iconMicActive : '')}>
+          <PiMicrophone />
+        </span>
       </button>
 
       {showMediaModal && pendingFile && (

@@ -227,7 +227,12 @@ const ChatWindow = ({ chatId }) => {
 
   return (
     <div className={styles.windowWrapper + (sidebarOpen ? ' ' + styles.sidebarOpen : '')}>
-      <ProfileSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} user={otherUser} />
+      <ProfileSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        user={otherUser}
+        typingUsers={typingUsers}
+      />
       <div className={styles.chatMain}>
         <ChatHeader
           otherUser={otherUser}

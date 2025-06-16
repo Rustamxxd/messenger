@@ -17,4 +17,10 @@
     background-color: #ffffff;
     position: relative;
   }
-  
+
+  .chatList {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+    min-height: 0;
+  }
