@@ -225,6 +225,15 @@ const ChatWindow = ({ chatId }) => {
   // Функция для передачи в ChatHeader
   const handleHeaderClick = () => setSidebarOpen(true);
 
+  const handleScrollToMessage = (messageId) => {
+    const el = document.getElementById(`message-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add(styles.highlighted);
+      setTimeout(() => el.classList.remove(styles.highlighted), 2000);
+    }
+  };
+
   return (
     <div className={styles.windowWrapper + (sidebarOpen ? ' ' + styles.sidebarOpen : '')}>
       <ProfileSidebar
@@ -232,6 +241,9 @@ const ChatWindow = ({ chatId }) => {
         onClose={() => setSidebarOpen(false)}
         user={otherUser}
         typingUsers={typingUsers}
+        allMessages={messages}
+        currentUserId={user?.uid}
+        onScrollToMessage={handleScrollToMessage}
       />
       <div className={styles.chatMain}>
         <ChatHeader

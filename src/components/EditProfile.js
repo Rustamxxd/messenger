@@ -37,8 +37,8 @@ export default function EditProfile() {
   const validationSchema = Yup.object({
     displayName: Yup.string()
       .required("Имя обязательно")
-      .max(20, "Максимум 20 символов"),
-    about: Yup.string().max(200, "Максимум 200 символов"),
+      .max(20),
+    about: Yup.string().max(70),
   });
 
   const formik = useFormik({
@@ -160,14 +160,23 @@ export default function EditProfile() {
           <div className={styles.error}>{formik.errors.about}</div>
         )}
         
-        <textarea
-          name="about"
-          placeholder="О себе"
-          value={formik.values.about}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className={styles.textarea}
-        />
+        <div className={styles.textareaWrapper}>
+          <textarea
+            name="about"
+            placeholder="О себе"
+            value={formik.values.about}
+            onChange={(e) => {
+              if (e.target.value.length <= 70) {
+                formik.handleChange(e);
+              }
+            }}
+            onBlur={formik.handleBlur}
+            className={styles.textarea}
+          />
+          <div className={styles.charCount}>
+            {70 - formik.values.about.length}
+          </div>
+        </div>
         
 
         <button

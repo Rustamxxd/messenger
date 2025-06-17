@@ -171,3 +171,75 @@
   transform: translateY(5px);
 }
 
+.messageLink {
+  color: #0088cc !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease, text-decoration 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.messageLink:hover {
+  color: #0056b3 !important;
+  text-decoration: underline !important;
+}
+
+.messageLink:active {
+  color: #003d82 !important;
+}
+
+.messageLink:visited {
+  color: #0088cc !important;
+}
+
+/* Стили для ссылок в подписях к медиа */
+.caption .messageLink {
+  color: #0088cc !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease, text-decoration 0.2s ease !important;
+}
+
+.caption .messageLink:hover {
+  color: #0056b3 !important;
+  text-decoration: underline !important;
+}
+
+.reply .messageLink {
+  color: #0088cc !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: color 0.2s ease, text-decoration 0.2s ease !important;
+}
+
+.reply .messageLink:hover {
+  color: #0056b3 !important;
+  text-decoration: underline !important;
+}
+
+.clickableLink {
+  color: #0088cc;
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.clickableLink:hover {
+  text-decoration: underline;
+  border-color: #0088cc;
+}
+
+.clickableLink:active {
+  color: #003d82;
+}
+
+.thumb {
+  max-width: 320px;
+  max-height: 320px;  
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}

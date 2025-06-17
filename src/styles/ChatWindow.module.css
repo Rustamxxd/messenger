@@ -208,7 +208,7 @@
 }
 
 .replyPreview {
-  background: #f1f0f0c7;
+  background: #f1f0f0;
   border-left: 3px solid #008316;
   padding: 6px 10px;
   border-radius: 8px;
@@ -219,6 +219,7 @@
   font-size: 13px;
   color: #333;
   gap: 8px;
+  z-index: 2000;
 }
 
 .replyMediaPreview {
@@ -227,6 +228,7 @@
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
+  z-index: 2000;
 }
 
 .replyAudioPreview {
@@ -243,6 +245,7 @@
 .replyAudioIcon {
   font-size: 20px;
   color: #666;
+  z-index: 2000;
 }
 
 .replyContent {
@@ -251,12 +254,14 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
+  z-index: 2000;
 }
 
 .replyLabel {
   font-weight: bold;
   margin-right: 8px;
   white-space: nowrap;
+  z-index: 2000;
 }
 
 .replyText {
@@ -264,6 +269,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  z-index: 2000;
 }
 
 .replyCancel {
@@ -273,6 +279,7 @@
   padding-left: 5px;
   color: #008316;
   cursor: pointer;
+  z-index: 2000;
 }
 
 .dateDivider {

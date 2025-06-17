@@ -9,7 +9,8 @@ import { useUsers } from '@/hooks/useUsers';
 import { formatDate } from '../../utils/dateUtils';
 import styles from '@/styles/ChatList.module.css';
 import { IoIosSearch, IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { FaPen, FaUsers, FaLink } from 'react-icons/fa';
+import { FaPen, FaUsers } from 'react-icons/fa';
+import { FiLink } from 'react-icons/fi';
 import { RiFileMusicLine } from "react-icons/ri";
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlinePlus } from 'react-icons/hi';
@@ -163,7 +164,25 @@ export default function ChatList({ onSelectChat }) {
       thumb: <video src={msg.text} className={styles.miniThumb} muted playsInline preload="metadata" />
     };
     if (msg.fileType === 'audio') return { text: 'Голос', thumb: <RiFileMusicLine className={isSelected ? styles.miniIconSelected : styles.miniIcon} /> };
-    if (msg.text && /(https?:\/\/[^\s]+)/.test(msg.text)) return { text: 'Ссылка', thumb: <FaLink className={isSelected ? styles.miniIconSelected : styles.miniIcon} /> };
+    if (msg.text && /(@?https?:\/\/[^\s]+|@?https?:\/[^\n\s]+|@?www\.[^\s]+|@?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s]*)/.test(msg.text)) {
+      const linkRegex = /(@?https?:\/\/[^\s]+|@?https?:\/[^\n\s]+|@?www\.[^\s]+|@?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s]*)/g;
+      const parts = msg.text.split(linkRegex);
+      return {
+        text: parts.map((part, idx) => {
+          if (linkRegex.test(part)) {
+            linkRegex.lastIndex = 0;
+            return (
+              <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                <FiLink style={{ marginRight: 2 }} />
+                {part}
+              </span>
+            );
+          }
+          return part;
+        }),
+        thumb: null
+      };
+    }
     return { text: msg.text || '', thumb: null };
   }
 
@@ -339,7 +358,7 @@ export default function ChatList({ onSelectChat }) {
                       <p className={styles.lastMessage}>
                         {preview.thumb && <span className={styles.lastMessageThumb}>{preview.thumb}</span>}
                         {chat.isGroup && lastMessage?.senderName ? `${lastMessage.senderName}: ` : ''}
-                        {preview.text}
+                        <span>{preview.text}</span>
                       </p>
                     </div>
                   </div>

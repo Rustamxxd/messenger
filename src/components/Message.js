@@ -3,6 +3,8 @@ import styles from "@/styles/Message.module.css";
 import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import { LuCheck, LuCheckCheck } from "react-icons/lu";
 import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
+import { renderTextWithLinks, processLinks } from "@/utils/linkUtils";
+import LinkText from "./LinkText";
 
 const Message = ({
   message,
@@ -102,8 +104,8 @@ const Message = ({
                 message.replyTo.fileType === "video" ? "Видео" : "Файл"
               ) : (
                 message.replyTo.text?.length > 50
-                  ? message.replyTo.text.slice(0, 50) + "..."
-                  : message.replyTo.text
+                  ? renderTextWithLinks(message.replyTo.text.slice(0, 50) + "...", styles)
+                  : renderTextWithLinks(message.replyTo.text, styles)
               )}
             </div>
           </div>
@@ -145,14 +147,14 @@ const Message = ({
                   }
                 >
                   {message.fileType === "image" && message.text && (
-                    <img src={message.text} alt="image" className="thumb" />
+                    <img src={message.text} alt="image" className={styles.thumb} />
                   )}
                   {message.fileType === "video" && message.text && (
                     <div className={styles.videoPreviewWrapper}>
                       <video
                         ref={videoRef}
                         src={message.text}
-                        className="thumb"
+                        className={styles.thumb}
                         muted
                         preload="metadata"
                         onLoadedMetadata={handleLoadedMetadata}
@@ -168,10 +170,10 @@ const Message = ({
                     </div>
                   )}
                   {message.caption && (
-                    <div className={styles.caption}>{message.caption}</div>
+                    <div className={styles.caption}>{renderTextWithLinks(message.caption, styles)}</div>
                   )}
                   {!message.caption && message.text && !["image", "video", "audio"].includes(message.fileType) && (
-                    <div className={styles.caption}>{message.text}</div>
+                    <div className={styles.caption}>{renderTextWithLinks(message.text, styles)}</div>
                   )}
                 </div>
               )}
@@ -179,12 +181,14 @@ const Message = ({
               {message.fileType === "audio" && (
                 <>
                   <VoiceMessagePlayer src={message.text} />
-                  {message.caption && <div className={styles.caption}>{message.caption}</div>}
+                  {message.caption && <div className={styles.caption}>{renderTextWithLinks(message.caption, styles)}</div>}
                 </>
               )}
 
               {!message.fileType && (
-                <p className={styles.text}>{message.text}</p>
+                <p className={styles.text}>
+                  <LinkText text={message.text} />
+                </p>
               )}
             </>
           )}

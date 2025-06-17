@@ -83,6 +83,7 @@
   height: 44px;
   border: 1px solid #eee;
   resize: none;
+  position: relative;
 }
 
 .emojiWrapper {
@@ -115,7 +116,24 @@
   background: transparent;
 }
 
+.animatedPlaceholder {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%) translateX(0);
+  color: #999;
+  font-size: 15px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 2;
+  white-space: nowrap;
+}
 
+.placeholderHidden {
+  opacity: 0;
+  transform: translateY(-50%) translateX(40px);
+}
 
 .sendIconBtn {
   background: white;

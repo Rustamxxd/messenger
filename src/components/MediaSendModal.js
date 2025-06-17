@@ -25,6 +25,7 @@ const MediaSendModal = ({ file, onSend, onCancel }) => {
   const handleSend = (e) => {
     e.preventDefault();
     onSend(caption);
+    onCancel();
   };
 
   return (
@@ -57,14 +58,20 @@ const MediaSendModal = ({ file, onSend, onCancel }) => {
               </div>
             )}
           </div>
+          
+          <div
+            className={styles.animatedPlaceholder + (caption ? ' ' + styles.placeholderHidden : '')}
+          >Добавьте подпись...</div>
+          
           <input
             type="text"
-            placeholder="Добавьте подпись..."
+            placeholder=""
             value={caption}
             onChange={e => setCaption(e.target.value)}
             className={styles.captionInput}
             onFocus={() => setShowEmoji(false)}
           />
+          
           <button type="submit" className={styles.sendIconBtn}>
             <IoSend className={styles.sendIcon} />
           </button>

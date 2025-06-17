@@ -71,6 +71,11 @@ if (!currentFile) return null;
     window.addEventListener("mouseup", handleMouseUp);
   };
 
+  useEffect(() => {
+    setZoomed(false);
+    setOffset({ x: 0, y: 0 });
+  }, [currentIndex]);
+
   return (
     <div className={styles.overlay}>
       <div className={styles.header}>

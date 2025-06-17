@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/ProfileSidebar.module.css';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { MdOutlineAlternateEmail, MdInfoOutline, MdNotificationsNone } from 'react-icons/md';
 import { Switch } from 'antd';
+import MediaViewer from './MediaViewer';
+import { FiLink } from 'react-icons/fi';
 
 function extractLinks(text) {
   if (!text) return [];
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urlRegex = /(@?https?:\/\/[^\s]+|@?https?:\/[^\s]+|@?www\.[^\s]+|@?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s]*)/g;
   return text.match(urlRegex) || [];
 }
 
@@ -15,10 +17,43 @@ function LoadingDots() {
   return <span className={styles.dots}>...</span>;
 }
 
-const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [] }) => {
+function getDomain(url) {
+  try {
+    url = url.replace(/^@/, '');
+    url = url.replace(/^(https?:)\/([^/])/, '$1//$2');
+    if (!/^https?:\/\//.test(url)) url = 'https://' + url;
+    const { hostname } = new URL(url);
+    return hostname.replace(/^www\./, '');
+  } catch {
+    const match = url.match(/([a-zA-Z0-9-]{1,61}\.[a-zA-Z]{2,})/);
+    return match ? match[1] : url;
+  }
+}
+
+const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], allMessages = [], currentUserId, onScrollToMessage }) => {
   const [user, setUser] = useState(initialUser);
   const [tab, setTab] = useState('media');
   const messages = user?.messages || [];
+
+  // Ref для автоскролла всего сайдбара
+  const sidebarContentRef = useRef(null);
+
+  // Для длительности видео
+  const [videoDurations, setVideoDurations] = useState({});
+
+  // Для MediaViewer
+  const [modalMedia, setModalMedia] = useState(null);
+
+  const handleLoadedMetadata = (i, e) => {
+    setVideoDurations(prev => ({ ...prev, [i]: e.target.duration }));
+  };
+
+  function formatDuration(seconds) {
+    if (!seconds) return null;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
 
   useEffect(() => {
     setUser(initialUser);
@@ -53,9 +88,23 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [] }) 
       status = 'был(а) недавно';
     }
   }
-  const media = messages.filter(m => m.fileType === 'image' || m.fileType === 'video');
-  const links = messages.filter(m => extractLinks(m.text).length > 0);
+
+  const allMedia = (allMessages || []).filter(m => (m.fileType === 'image' || m.fileType === 'video') && !m.deleted);
+  const allLinks = (allMessages || []).filter(
+    m =>
+      (!m.fileType || m.fileType === 'text') &&
+      extractLinks(m.text).length > 0 &&
+      !m.deleted &&
+      !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
+  );
   const voices = messages.filter(m => m.fileType === 'audio');
+
+  // Автоскролл вниз при изменении вкладки или содержимого
+  useEffect(() => {
+    if (sidebarContentRef.current) {
+      sidebarContentRef.current.scrollTop = sidebarContentRef.current.scrollHeight;
+    }
+  }, [tab, allMedia.length, allLinks.length, voices.length]);
 
   return (
     <>
@@ -65,84 +114,147 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [] }) 
           <button className={styles.closeBtn} onClick={onClose}>×</button>
           <span className={styles.headerTitle}>Информация</span>
         </div>
-        <div className={styles.avatarWrapper}>
-          <img src={user?.photoURL || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
-          <div className={styles.profileInfo}>
-            <div className={styles.displayName}>{user?.displayName || 'Пользователь'}</div>
-            {status && (
-              <div className={statusClass}>
-                {status}
-                {typingUsers.length > 0 && <LoadingDots />}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className={styles.section}>
-          <div className={styles.menuItem}>
-            <span className={styles.menuIcon}><MdOutlineAlternateEmail /></span>
-            <div className={styles.menuTextBlock}>
-              <span className={styles.menuMainText}>{user?.displayName || '—'}</span>
-              <span className={styles.menuSubText}>Имя пользователя</span>
+        
+        <div 
+          className={styles.sidebarContent}
+          ref={sidebarContentRef}
+        >
+          <div className={styles.avatarWrapper}>
+            <img src={user?.photoURL || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
+            <div className={styles.profileInfo}>
+              <div className={styles.displayName}>{user?.displayName || 'Пользователь'}</div>
+              {status && (
+                <div className={statusClass}>
+                  {status}
+                  {typingUsers.length > 0 && <LoadingDots />}
+                </div>
+              )}
             </div>
           </div>
-          <div className={styles.menuItem}>
-            <span className={styles.menuIcon}><MdInfoOutline /></span>
-            <div className={styles.menuTextBlock}>
-              <span className={styles.menuMainText}>{user?.about || '—'}</span>
-              <span className={styles.menuSubText}>О себе</span>
+          
+          <div className={styles.section}>
+            <div className={styles.menuItem}>
+              <span className={styles.menuIcon}><MdOutlineAlternateEmail /></span>
+              <div className={styles.menuTextBlock}>
+                <span className={styles.menuMainText}>{user?.displayName || '—'}</span>
+                <span className={styles.menuSubText}>Имя пользователя</span>
+              </div>
+            </div>
+            <div className={styles.menuItem}>
+              <span className={styles.menuIcon}><MdInfoOutline /></span>
+              <div className={styles.menuTextBlock}>
+                <span className={styles.menuMainText}>{user?.about || '—'}</span>
+                <span className={styles.menuSubText}>О себе</span>
+              </div>
+            </div>
+            <div className={styles.menuItem}>
+              <span className={styles.menuIcon}><MdNotificationsNone /></span>
+              <span className={styles.menuMainText} style={{color:'#222'}}>Уведомления</span>
+              <Switch defaultChecked style={{marginLeft:'auto'}} size="large"/>
+            </div>
+            
+            <div className={styles.tabs}>
+              <button className={tab === 'media' ? styles.activeTab : ''} onClick={() => setTab('media')}>Медиа</button>
+              <button className={tab === 'links' ? styles.activeTab : ''} onClick={() => setTab('links')}>Ссылки</button>
+              <button className={tab === 'voice' ? styles.activeTab : ''} onClick={() => setTab('voice')}>Голос</button>
             </div>
           </div>
-          <div className={styles.menuItem}>
-            <span className={styles.menuIcon}><MdNotificationsNone /></span>
-            <span className={styles.menuMainText} style={{color:'#222'}}>Уведомления</span>
-            <Switch defaultChecked style={{marginLeft:'auto'}} size="large"/>
-          </div>
-          <div className={styles.tabs}>
-            <button className={tab === 'media' ? styles.activeTab : ''} onClick={() => setTab('media')}>Медиа</button>
-            <button className={tab === 'links' ? styles.activeTab : ''} onClick={() => setTab('links')}>Ссылки</button>
-            <button className={tab === 'voice' ? styles.activeTab : ''} onClick={() => setTab('voice')}>Голос</button>
-          </div>
-          <div className={styles.tabContent}>
-            {tab === 'media' && media.length > 0 && (
-              <div className={styles.mediaGrid}>
-                {media.map((m, i) => m.fileType === 'image' ? (
-                  <img key={i} src={m.text} alt="media" className={styles.mediaThumb} />
-                ) : (
-                  <video key={i} src={m.text} className={styles.mediaThumb} controls />
-                ))}
-              </div>
-            )}
-            {tab === 'links' && links.length > 0 && (
-              <div className={styles.linksList}>
-                {links.map((m, i) => (
-                  <div key={i} className={styles.linkItem}>
-                    {extractLinks(m.text).map((url, j) => (
-                      <a key={j} href={url} target="_blank" rel="noopener noreferrer" className={styles.linkUrl}>{url}</a>
-                    ))}
-                    <div className={styles.linkText}>{m.text}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {tab === 'voice' && voices.length > 0 && (
-              <div className={styles.voiceList}>
-                {voices.map((m, i) => (
-                  <audio key={i} src={m.text} controls className={styles.voiceAudio} />
-                ))}
-              </div>
-            )}
-          </div>
+
+          {/* Контент вкладок вне блока section */}
+          {tab === 'media' && (
+            <>
+              {allMedia.length > 0 && (
+                <div className={styles.mediaGrid}>
+                  {[...allMedia].reverse().map((m, i) => {
+                    const mediaArr = allMedia.map(med => ({ url: med.text, type: med.fileType }));
+                    const handleOpenMedia = () => setModalMedia({ files: mediaArr, initialIndex: allMedia.length - 1 - i });
+                    return m.fileType === 'image' ? (
+                      <img
+                        key={i}
+                        src={m.text}
+                        alt="media"
+                        className={styles.mediaThumb}
+                        onClick={handleOpenMedia}
+                      />
+                    ) : (
+                      <div key={i} className={styles.videoPreviewWrapper}>
+                        <video
+                          src={m.text}
+                          className={styles.mediaThumb}
+                          muted
+                          preload="metadata"
+                          onLoadedMetadata={e => handleLoadedMetadata(i, e)}
+                          onClick={handleOpenMedia}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        {videoDurations[i] && (
+                          <span className={styles.videoDuration}>{formatDuration(videoDurations[i])}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {allMedia.length === 0 && (
+                <div className={styles.emptyTab}>Нет медиа</div>
+              )}
+              {modalMedia && (
+                <MediaViewer
+                  files={modalMedia.files}
+                  initialIndex={modalMedia.initialIndex}
+                  onClose={() => setModalMedia(null)}
+                />
+              )}
+            </>
+          )}
+          
+          {tab === 'links' && allLinks.length > 0 && (
+            <div className={styles.linksSection}>
+              {[...allLinks].reverse().map((m, i) => (
+                extractLinks(m.text).map((url, j) => {
+                  const domain = getDomain(url);
+                  const firstLetter = domain[0]?.toUpperCase() || '';
+                  return (
+                    <div key={j} className={styles.linkMenuItem}>
+                      <span className={styles.linkAvatarLarge}>{firstLetter}</span>
+                      <div className={styles.menuTextBlock}>
+                        <span
+                          className={styles.menuMainText}
+                          onClick={() => onScrollToMessage && onScrollToMessage(m.id)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {domain}
+                        </span>
+                        <a
+                          href={url.replace(/^@/, '').replace(/^https?:\/\//, 'https://')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.linkUrl}
+                        >
+                          {url.replace(/^@/, '')}
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })
+              ))}
+            </div>
+          )}
+          {tab === 'links' && allLinks.length === 0 && (
+            <div className={styles.emptyTab}>Нет ссылок</div>
+          )}
+          
+          {tab === 'voice' && voices.length > 0 && (
+            <div className={styles.voiceList}>
+              {voices.map((m, i) => (
+                <audio key={i} src={m.text} controls className={styles.voiceAudio} />
+              ))}
+            </div>
+          )}
+          {tab === 'voice' && voices.length === 0 && (
+            <div className={styles.emptyTab}>Нет голосовых</div>
+          )}
         </div>
-        {/* Сообщения о пустых вкладках вне блока section */}
-        {tab === 'media' && media.length === 0 && (
-          <div className={styles.emptyTab}>Нет медиа</div>
-        )}
-        {tab === 'links' && links.length === 0 && (
-          <div className={styles.emptyTab}>Нет ссылок</div>
-        )}
-        {tab === 'voice' && voices.length === 0 && (
-          <div className={styles.emptyTab}>Нет голосовых</div>
-        )}
       </aside>
     </>
   );
