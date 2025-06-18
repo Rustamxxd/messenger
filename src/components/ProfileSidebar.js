@@ -6,6 +6,7 @@ import { MdOutlineAlternateEmail, MdInfoOutline, MdNotificationsNone } from 'rea
 import { Switch } from 'antd';
 import MediaViewer from './MediaViewer';
 import { FiLink } from 'react-icons/fi';
+import VoiceMessagePlayer from './VoiceMessagePlayer';
 
 function extractLinks(text) {
   if (!text) return [];
@@ -44,6 +45,11 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
   // Для MediaViewer
   const [modalMedia, setModalMedia] = useState(null);
 
+  const [tabTransition, setTabTransition] = useState(false);
+  const [swapDirection, setSwapDirection] = useState('right');
+  const [contentVisible, setContentVisible] = useState(true);
+  const prevTab = useRef(tab);
+
   const handleLoadedMetadata = (i, e) => {
     setVideoDurations(prev => ({ ...prev, [i]: e.target.duration }));
   };
@@ -72,6 +78,21 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     return () => unsubscribe();
   }, [initialUser?.uid]);
 
+  useEffect(() => {
+    if (prevTab.current !== tab) {
+      const tabOrder = ['media', 'links', 'voice'];
+      const prevIndex = tabOrder.indexOf(prevTab.current);
+      const currentIndex = tabOrder.indexOf(tab);
+      const direction = currentIndex > prevIndex ? 'right' : 'left';
+      
+      setSwapDirection(direction);
+      setTabTransition(true);
+      const timeout = setTimeout(() => setTabTransition(false), 300);
+      prevTab.current = tab;
+      return () => clearTimeout(timeout);
+    }
+  }, [tab]);
+
   let status = '';
   let statusClass = styles.userStatus;
   if (typingUsers.length > 0) {
@@ -97,7 +118,12 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
       !m.deleted &&
       !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
   );
-  const voices = messages.filter(m => m.fileType === 'audio');
+  const voices = (allMessages || []).filter(
+    m => 
+      m.fileType === 'audio' && 
+      !m.deleted && 
+      !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
+  );
 
   // Автоскролл вниз при изменении вкладки или содержимого
   useEffect(() => {
@@ -160,100 +186,135 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
             </div>
           </div>
 
-          {/* Контент вкладок вне блока section */}
-          {tab === 'media' && (
-            <>
-              {allMedia.length > 0 && (
-                <div className={styles.mediaGrid}>
-                  {[...allMedia].reverse().map((m, i) => {
-                    const mediaArr = allMedia.map(med => ({ url: med.text, type: med.fileType }));
-                    const handleOpenMedia = () => setModalMedia({ files: mediaArr, initialIndex: allMedia.length - 1 - i });
-                    return m.fileType === 'image' ? (
-                      <img
-                        key={i}
-                        src={m.text}
-                        alt="media"
-                        className={styles.mediaThumb}
-                        onClick={handleOpenMedia}
+          {/* Контент вкладок с анимацией */}
+          <div className={styles.tabContentWrapper + (tabTransition ? ' ' + styles.tabContentTransition + ' ' + styles['swap' + swapDirection.charAt(0).toUpperCase() + swapDirection.slice(1)] : '')} key={tab}>
+            {contentVisible && (
+              <>
+                {tab === 'media' && (
+                  <>
+                    {allMedia.length > 0 && (
+                      <div className={styles.mediaGrid}>
+                        {[...allMedia].reverse().map((m, i) => {
+                          const mediaArr = allMedia.map(med => ({ url: med.text, type: med.fileType }));
+                          const handleOpenMedia = () => setModalMedia({ files: mediaArr, initialIndex: allMedia.length - 1 - i });
+                          return m.fileType === 'image' ? (
+                            <img
+                              key={i}
+                              src={m.text}
+                              alt="media"
+                              className={styles.mediaThumb}
+                              onClick={handleOpenMedia}
+                            />
+                          ) : (
+                            <div key={i} className={styles.videoPreviewWrapper}>
+                              <video
+                                src={m.text}
+                                className={styles.mediaThumb}
+                                muted
+                                preload="metadata"
+                                onLoadedMetadata={e => handleLoadedMetadata(i, e)}
+                                onClick={handleOpenMedia}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              {videoDurations[i] && (
+                                <span className={styles.videoDuration}>{formatDuration(videoDurations[i])}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {allMedia.length === 0 && (
+                      <div className={styles.emptyTab}>Нет медиа</div>
+                    )}
+                    {modalMedia && (
+                      <MediaViewer
+                        files={modalMedia.files}
+                        initialIndex={modalMedia.initialIndex}
+                        onClose={() => setModalMedia(null)}
                       />
-                    ) : (
-                      <div key={i} className={styles.videoPreviewWrapper}>
-                        <video
-                          src={m.text}
-                          className={styles.mediaThumb}
-                          muted
-                          preload="metadata"
-                          onLoadedMetadata={e => handleLoadedMetadata(i, e)}
-                          onClick={handleOpenMedia}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        {videoDurations[i] && (
-                          <span className={styles.videoDuration}>{formatDuration(videoDurations[i])}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {allMedia.length === 0 && (
-                <div className={styles.emptyTab}>Нет медиа</div>
-              )}
-              {modalMedia && (
-                <MediaViewer
-                  files={modalMedia.files}
-                  initialIndex={modalMedia.initialIndex}
-                  onClose={() => setModalMedia(null)}
-                />
-              )}
-            </>
-          )}
-          
-          {tab === 'links' && allLinks.length > 0 && (
-            <div className={styles.linksSection}>
-              {[...allLinks].reverse().map((m, i) => (
-                extractLinks(m.text).map((url, j) => {
-                  const domain = getDomain(url);
-                  const firstLetter = domain[0]?.toUpperCase() || '';
-                  return (
-                    <div key={j} className={styles.linkMenuItem}>
-                      <span className={styles.linkAvatarLarge}>{firstLetter}</span>
-                      <div className={styles.menuTextBlock}>
-                        <span
-                          className={styles.menuMainText}
-                          onClick={() => onScrollToMessage && onScrollToMessage(m.id)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {domain}
-                        </span>
-                        <a
-                          href={url.replace(/^@/, '').replace(/^https?:\/\//, 'https://')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.linkUrl}
-                        >
-                          {url.replace(/^@/, '')}
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })
-              ))}
-            </div>
-          )}
-          {tab === 'links' && allLinks.length === 0 && (
-            <div className={styles.emptyTab}>Нет ссылок</div>
-          )}
-          
-          {tab === 'voice' && voices.length > 0 && (
-            <div className={styles.voiceList}>
-              {voices.map((m, i) => (
-                <audio key={i} src={m.text} controls className={styles.voiceAudio} />
-              ))}
-            </div>
-          )}
-          {tab === 'voice' && voices.length === 0 && (
-            <div className={styles.emptyTab}>Нет голосовых</div>
-          )}
+                    )}
+                  </>
+                )}
+                
+                {tab === 'links' && allLinks.length > 0 && (
+                  <div className={styles.linksSection}>
+                    {[...allLinks].reverse().map((m, i) => (
+                      extractLinks(m.text).map((url, j) => {
+                        const domain = getDomain(url);
+                        const firstLetter = domain[0]?.toUpperCase() || '';
+                        return (
+                          <div key={j} className={styles.linkMenuItem}>
+                            <span className={styles.linkAvatarLarge}>{firstLetter}</span>
+                            <div className={styles.menuTextBlock}>
+                              <span
+                                className={styles.menuMainText}
+                                onClick={() => onScrollToMessage && onScrollToMessage(m.id)}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                {domain}
+                              </span>
+                              <a
+                                href={url.replace(/^@/, '').replace(/^https?:\/\//, 'https://')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.linkUrl}
+                              >
+                                {url.replace(/^@/, '')}
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ))}
+                  </div>
+                )}
+                {tab === 'links' && allLinks.length === 0 && (
+                  <div className={styles.emptyTab}>Нет ссылок</div>
+                )}
+                
+                {tab === 'voice' && voices.length > 0 && (
+                  <div className={styles.voiceSection}>
+                    {voices.map((m, i) => {
+                      const isMe = m.sender === currentUserId;
+                      const senderName = isMe ? 'Вы' : (initialUser?.displayName || m.senderName || m.sender || '—');
+                      return (
+                        <div key={i} className={styles.voiceMenuItem} style={{alignItems: 'center'}}>
+                          <div className={styles.voiceTextBlock}>
+                            <div className={styles.voiceSender}>
+                              {senderName}
+                            </div>
+                            <VoiceMessagePlayer src={m.text} isOwn={isMe} />
+                          </div>
+                          <span className={styles.voiceDate}>
+                            {(() => {
+                              if (!m.timestamp) return '';
+                              const date = m.timestamp.toDate ? m.timestamp.toDate() : m.timestamp;
+                              const now = new Date();
+                              const isToday = date.toDateString() === now.toDateString();
+                              const yesterday = new Date(now);
+                              yesterday.setDate(now.getDate() - 1);
+                              const isYesterday = date.toDateString() === yesterday.toDateString();
+                              if (isToday) {
+                                return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                              } else if (isYesterday) {
+                                return 'вчера';
+                              } else {
+                                return date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+                              }
+                            })()}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {tab === 'voice' && voices.length === 0 && (
+                  <div className={styles.emptyTab}>Нет голосовых</div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </aside>
     </>

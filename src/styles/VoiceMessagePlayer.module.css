@@ -5,16 +5,16 @@
 }
 
 .playButton {
-  width: 43px;
-  height: 43px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background-color: rgb(1, 124, 1);
+  background-color: #208620;
   color: white;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 2px;
+  padding-left: 1.5px;
   cursor: pointer;
 }
 
@@ -28,8 +28,19 @@
 
 .timeCounter {
   position: absolute;
-  top: 50px;
-  right: 90px;
+  transform: translate(55px, 28px);
   font-size: 14px;
   color: #999;
+}
+
+.playButtonOther {
+  background-color: #245cd4;
+}
+
+.pause {
+  font-size: 17px;
+}
+
+.play {
+  font-size: 17px;
 }

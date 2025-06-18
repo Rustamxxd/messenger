@@ -179,10 +179,7 @@ const Message = ({
               )}
 
               {message.fileType === "audio" && (
-                <>
-                  <VoiceMessagePlayer src={message.text} />
-                  {message.caption && <div className={styles.caption}>{renderTextWithLinks(message.caption, styles)}</div>}
-                </>
+                <VoiceMessagePlayer src={message.text} isOwn={isOwn} />
               )}
 
               {!message.fileType && (

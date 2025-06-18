@@ -28,6 +28,7 @@
   transition: right 0.3s cubic-bezier(.4,0,.2,1);
   display: flex;
   flex-direction: column;
+  border-left: 1px solid #eee;
 }
 
 .sidebar.open {
@@ -41,7 +42,6 @@
   background: #fff;
   display: flex;
   align-items: center;
-  border-left: 1px solid #eee;
   height: 68.5px;
   border-bottom: 1px solid #ccc;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -167,7 +167,6 @@
 
 .section {
   border-top: 1px solid #eee;
-  border-left: 1px solid #eee;
   border-bottom: 3px solid #eee;
   padding: 10px 20px 0 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
@@ -211,7 +210,6 @@
 }
 
 .mediaGrid {
-  border-left: 1px solid #eee;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
@@ -241,8 +239,17 @@
   font-size: 0.9rem;
 }
 
+.voiceDate {
+  margin-left: auto;
+  color: #888;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .voiceAudio {
   width: 100%;
+  max-width: 220px;
+  margin-top: 4px;
 }
 
 .emptyTab {
@@ -279,6 +286,8 @@
 
 .menuMainText {
   font-size: 17px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .menuSubText {
   color: #666;
@@ -357,7 +366,6 @@
 }
 
 .linksSection {
-  border-left: 1px solid #eee;
   padding: 10px 20px 0 20px;
 }
 
@@ -392,4 +400,67 @@
   display: inline-block;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.linkTextBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.linkMainText {
+  font-weight: bold;
+  font-size: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.voiceSection {
+  padding: 10px 20px 0 20px;
+}
+
+.voiceMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  min-height: 40px;
+}
+
+.voiceTextBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.voiceSender {
+  font-size: 14px;
+  margin-bottom: 5px;
+  transform: translateY(2px);
+}
+
+.voiceDate {
+  transform: translateY(10px);
+  color: #777;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.tabContentWrapper {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+.tabContentTransition {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.swapRight {
+  transform: translateX(30px);
+}
+
+.swapLeft {
+  transform: translateX(-30px);
 }

@@ -3,7 +3,7 @@ import { FaPlay, FaPause } from "react-icons/fa";
 import styles from "../styles/VoiceMessagePlayer.module.css"
 import WaveSurfer from "wavesurfer.js";
 
-const VoiceMessagePlayer = ({ src }) => {
+const VoiceMessagePlayer = ({ src, isOwn }) => {
   const containerRef = useRef(null);
   const wavesurferRef = useRef(null);
   const [duration, setDuration] = useState(0);
@@ -28,8 +28,8 @@ const VoiceMessagePlayer = ({ src }) => {
       try {
         wavesurfer = WaveSurfer.create({
           container: containerRef.current,
-          waveColor: "#ccc",
-          progressColor: "#3ba55d",
+          waveColor: isOwn ? "#ccc" : "#b3cdfa",
+          progressColor: isOwn ? "#3ba55d" : "#2563eb",
           barWidth: 2,
           height: 40,
           interact: true,
@@ -76,14 +76,14 @@ const VoiceMessagePlayer = ({ src }) => {
         console.warn("WaveSurfer destroy failed", err);
       }
     };
-  }, [src]);
+  }, [src, isOwn]);
 
   const formatTime = (s) =>
     `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   return (
     <div className={styles.voiceWrapper}>
-        <button className={styles.playButton} onClick={togglePlay}>
+        <button className={styles.playButton + ' ' + (isOwn ? styles.playButtonOwn : styles.playButtonOther)} onClick={togglePlay}>
         {isPlaying ? <FaPause className={styles.pause} /> : <FaPlay className={styles.play} />}
         </button>
 
