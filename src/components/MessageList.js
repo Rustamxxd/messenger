@@ -15,6 +15,10 @@ const MessageList = ({
   onUpdateMessage,
   editingMessageId,
   setEditingMessageId,
+  selectedMessage,
+  selectedMessages,
+  onSelectMessage,
+  multiSelectMode,
 }) => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -90,24 +94,44 @@ const MessageList = ({
                 </div>
               )}
 
-              <Message
-                message={msg}
-                isOwn={msg.sender === userId}
+              <div className={styles.messageContainer + ((selectedMessage && selectedMessage.id === msg.id) || (selectedMessages && selectedMessages.includes(msg.id)) ? ' ' + styles.contextMenuActive : '')} style={{position: 'relative'}}
                 onContextMenu={(e) => onContextMenu(e, msg)}
-                onReply={() => onReply(msg)}
-                onReplyClick={() => onReplyClick(msg)}
-                onDelete={() => onDelete(msg.id)}
-                onHide={() => onHide(msg.id)}
-                setModalMedia={setModalMedia}
-                allMedia={allMedia}
-                isEditing={editingMessageId === msg.id}
-                onStartEdit={() => setEditingMessageId(msg.id)}
-                onSaveEdit={(newText) => {
-                  onUpdateMessage(msg.id, newText);
-                  setEditingMessageId(null);
-                }}
-                onCancelEdit={() => setEditingMessageId(null)}
-              />
+                onClick={multiSelectMode ? () => onSelectMessage(msg.id) : undefined}
+              >
+                <div
+                  className={[
+                    styles.multiSelectCheckbox,
+                    multiSelectMode ? styles.multiSelectCheckboxActive : '',
+                    selectedMessages && selectedMessages.includes(msg.id) ? styles.checked : ''
+                  ].join(' ')}
+                  role="checkbox"
+                  aria-checked={selectedMessages && selectedMessages.includes(msg.id) ? 'true' : 'false'}
+                  tabIndex={multiSelectMode ? 0 : -1}
+                  onClick={multiSelectMode ? (e) => { e.stopPropagation(); onSelectMessage(msg.id); } : undefined}
+                  onKeyDown={multiSelectMode ? e => { if (e.key === ' ' || e.key === 'Enter') onSelectMessage(msg.id); } : undefined}
+                />
+                <Message
+                  message={msg}
+                  isOwn={msg.sender === userId}
+                  onContextMenu={undefined}
+                  onReply={() => onReply(msg)}
+                  onReplyClick={() => onReplyClick(msg)}
+                  onDelete={() => onDelete(msg.id)}
+                  onHide={() => onHide(msg.id)}
+                  setModalMedia={setModalMedia}
+                  allMedia={allMedia}
+                  isEditing={editingMessageId === msg.id}
+                  onStartEdit={() => setEditingMessageId(msg.id)}
+                  onSaveEdit={(newText) => {
+                    onUpdateMessage(msg.id, newText);
+                    setEditingMessageId(null);
+                  }}
+                  onCancelEdit={() => setEditingMessageId(null)}
+                  selected={selectedMessages && selectedMessages.includes(msg.id)}
+                  onSelectMessage={onSelectMessage}
+                  multiSelectMode={multiSelectMode}
+                />
+              </div>
             </React.Fragment>
           );
         })}

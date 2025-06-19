@@ -70,7 +70,6 @@ const VoiceMessagePlayer = ({ src, isOwn }) => {
         }
       } catch (err) {
         if (err?.message?.includes('signal is aborted')) {
-          // Игнорируем эту ошибку
           return;
         }
         console.warn("WaveSurfer destroy failed", err);
@@ -84,7 +83,7 @@ const VoiceMessagePlayer = ({ src, isOwn }) => {
   return (
     <div className={styles.voiceWrapper}>
         <button className={styles.playButton + ' ' + (isOwn ? styles.playButtonOwn : styles.playButtonOther)} onClick={togglePlay}>
-        {isPlaying ? <FaPause className={styles.pause} /> : <FaPlay className={styles.play} />}
+        {isPlaying ? <FaPause className={styles.pause} title="Пауза" /> : <FaPlay className={styles.play} title="Воспроизвести" />}
         </button>
 
         <div ref={containerRef} className={styles.waveformContainer} />

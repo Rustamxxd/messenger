@@ -1,12 +1,13 @@
 .message {
   position: relative;
+  z-index: 2;
   max-width: 80%;
   width: fit-content;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 14px;
   word-break: break-word;
-  margin-bottom: 6px;
+  margin-bottom: 1px;
   align-self: flex-start;
   background-color: #ffffff;
   color: #000;
@@ -242,4 +243,20 @@
   object-fit: cover;
   display: block;
   margin: 0 auto;
+}
+
+.sendingSpinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2.5px solid #b3b3b3;
+  border-top: 2.5px solid #6ec1e4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

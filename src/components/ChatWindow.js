@@ -9,9 +9,12 @@ import MediaViewer from "./MediaViewer";
 import { IoArrowDown } from "react-icons/io5";
 import { useChat } from "@/hooks/useChat";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { doc, updateDoc, arrayUnion, deleteDoc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import ProfileSidebar from './ProfileSidebar';
+import { CloseOutlined, DeleteOutlined, CopyOutlined } from '@ant-design/icons';
+import { getUserProfile } from "../lib/firebase";
+import { LuInfo } from "react-icons/lu";
 
 const ChatWindow = ({ chatId }) => {
   const {
@@ -35,6 +38,11 @@ const ChatWindow = ({ chatId }) => {
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [usersCache, setUsersCache] = useState({});
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -116,6 +124,10 @@ const ChatWindow = ({ chatId }) => {
   };
 
   const handleContextMenu = (e, msg) => {
+    if (selectedMessages.includes(msg.id)) {
+      // Если уже выбрано — не открывать кастомное меню, позволить стандартному
+      return;
+    }
     e.preventDefault();
     setSelectedMessage(msg);
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY });
@@ -182,11 +194,28 @@ const ChatWindow = ({ chatId }) => {
   };
 
   const handleHideMessage = async (messageId) => {
-    // Добавляем сообщение в deletedFor для текущего пользователя
-    const messageRef = doc(db, `chats/${chatId}/messages`, messageId);
-    await updateDoc(messageRef, {
-      deletedFor: arrayUnion(user.uid)
-    });
+    try {
+      const messageRef = doc(db, `chats/${chatId}/messages`, messageId);
+      const messageSnap = await getDoc(messageRef);
+      if (messageSnap.exists()) {
+        const messageData = messageSnap.data();
+        // Создаем полную структуру документа
+        await updateDoc(messageRef, {
+          ...messageData,  // сохраняем все существующие поля
+          text: messageData.text || '',
+          sender: messageData.sender || '',
+          timestamp: messageData.timestamp || null,
+          deletedFor: [...(messageData.deletedFor || []), user.uid],
+          fileType: messageData.fileType || null,
+          caption: messageData.caption || null,
+          read: messageData.read || false,
+          edited: messageData.edited || false,
+          replyTo: messageData.replyTo || null
+        });
+      }
+    } catch (error) {
+      console.error("Error hiding message:", error);
+    }
   };
 
   // Фильтруем сообщения, исключая удаленные
@@ -234,6 +263,96 @@ const ChatWindow = ({ chatId }) => {
     }
   };
 
+  const handleSelectMessage = (id) => {
+    if (!multiSelectMode) setMultiSelectMode(true);
+    setSelectedMessages((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
+  };
+
+  const handleExitMultiSelect = () => {
+    setMultiSelectMode(false);
+    setSelectedMessages([]);
+    setSelectedMessage(null);
+  };
+
+  useEffect(() => {
+    if (multiSelectMode && selectedMessages.length === 0) {
+      setMultiSelectMode(false);
+    }
+  }, [selectedMessages, multiSelectMode]);
+
+  const handleDeleteSelected = async () => {
+    const ownIds = [];
+    const foreignIds = [];
+    selectedMessages.forEach(id => {
+      const msg = messages.find(m => m.id === id);
+      if (!msg) return;
+      if (msg.sender === user.uid) ownIds.push({id, msg});
+      else foreignIds.push(id);
+    });
+    setIsDeleting(true);
+    // Удалить свои у всех параллельно
+    const ownPromise = Promise.all(ownIds.map(({id, msg}) => deleteMessage(id, msg)));
+    // Удалить чужие только локально параллельно
+    const foreignPromise = Promise.all(foreignIds.map(id => {
+      const messageRef = doc(db, `chats/${chatId}/messages`, id);
+      return updateDoc(messageRef, { deletedFor: arrayUnion(user.uid) });
+    }));
+    await Promise.all([ownPromise, foreignPromise]);
+    setIsDeleting(false);
+    setSelectedMessages([]);
+    setMultiSelectMode(false);
+    setReplyTo(null);
+    setFile(null);
+    setFilePreview(null);
+    setNewMessage("");
+  };
+
+  // Получить displayName по uid (с кэшем)
+  const getDisplayName = async (uid) => {
+    if (uid === user.uid) return user.displayName || user.email || 'Вы';
+    if (usersCache[uid]) return usersCache[uid].displayName || usersCache[uid].email || uid;
+    const profile = await getUserProfile(uid);
+    setUsersCache((prev) => ({ ...prev, [uid]: profile }));
+    return profile?.displayName || profile?.email || uid;
+  };
+
+  // Формирование текста для копирования
+  const handleCopySelected = async () => {
+    // Сортируем по времени (по умолчанию filteredMessages уже отсортированы)
+    const selectedMsgs = filteredMessages.filter((m) => selectedMessages.includes(m.id));
+    const lines = await Promise.all(selectedMsgs.map(async (msg) => {
+      const name = await getDisplayName(msg.sender);
+      let line = `> ${name}:`;
+      if (msg.fileType === 'audio') {
+        line += `\n🎤 Голосовое сообщение${msg.caption ? ` (${msg.caption})` : ''}`;
+      } else if (msg.fileType === 'image') {
+        line += `\n🖼 ${msg.caption ? msg.caption : 'Фото'}`;
+      } else if (msg.fileType === 'video') {
+        line += `\n📹 ${msg.caption ? msg.caption : 'Видео'}`;
+      } else if (msg.text) {
+        line += `\n${msg.text}`;
+      }
+      return line;
+    }));
+    const text = lines.join('\n\n');
+    await navigator.clipboard.writeText(text);
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 3000);
+    // Сброс мультивыбора
+    setSelectedMessages([]);
+    setMultiSelectMode(false);
+  };
+
+  const handleClearSelectedMessage = () => setSelectedMessage(null);
+
+  // Для передачи в ContextMenu
+  const handleCopyText = () => {
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 3000);
+  };
+
   return (
     <div className={styles.windowWrapper + (sidebarOpen ? ' ' + styles.sidebarOpen : '')}>
       <ProfileSidebar
@@ -264,6 +383,10 @@ const ChatWindow = ({ chatId }) => {
           onUpdateMessage={(id, newText) => updateMessage(id, newText)}
           editingMessageId={editingMessageId}
           setEditingMessageId={setEditingMessageId}
+          selectedMessage={selectedMessage}
+          selectedMessages={selectedMessages}
+          onSelectMessage={handleSelectMessage}
+          multiSelectMode={multiSelectMode}
         />
 
         {modalMedia && (
@@ -300,18 +423,42 @@ const ChatWindow = ({ chatId }) => {
           setFile={setFile}
           replyTo={replyTo}
           setReplyTo={setReplyTo}
+          multiSelectMode={multiSelectMode}
+          selectedMessages={selectedMessages}
+          onExitMultiSelect={handleExitMultiSelect}
+          onDeleteSelected={handleDeleteSelected}
+          onCopySelected={handleCopySelected}
+          isDeleting={isDeleting}
+          onClearSelectedMessage={handleClearSelectedMessage}
         />
 
         {contextMenu.visible && (
           <ContextMenu
             contextMenu={contextMenu}
             selectedMessage={selectedMessage}
-            onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+            onClose={() => {
+              setContextMenu({ ...contextMenu, visible: false });
+              if (!selectedMessages.includes(selectedMessage?.id)) {
+                setSelectedMessage(null);
+              }
+            }}
             onReply={handleReply}
             onEdit={(msg) => setEditingMessageId(msg.id)}
             onDelete={handleDeleteMessage}
             onHide={handleHideMessage}
+            onSelect={(id) => {
+              handleSelectMessage(id);
+              setMultiSelectMode(true);
+            }}
+            onCopyText={handleCopyText}
           />
+        )}
+
+        {showSnackbar && (
+          <div className={styles.snackbar}>
+            <LuInfo className={styles.snackbarIcon} />
+            Скопировано в буфер обмена
+          </div>
         )}
 
         <div ref={messagesEndRef} />

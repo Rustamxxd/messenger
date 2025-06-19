@@ -7,10 +7,12 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import LoadingDots from "./LoadingDots";
+import UserAvatar from './UserAvatar';
 
 const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrNameClick }) => {
   const router = useRouter();
   const [otherUser, setOtherUser] = useState(initialOtherUser);
+  const defaultAvatar = "/assets/default-avatar.png";
 
   useEffect(() => {
     setOtherUser(initialOtherUser); // Сбрасываем состояние при смене пользователя
@@ -77,7 +79,7 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
       ) : (
         <>
           <img
-            src={displayUser?.photoURL || "/default-avatar.png"}
+            src={displayUser?.photoURL || defaultAvatar}
             alt="Avatar"
             className={styles.avatar}
             onClick={onAvatarOrNameClick}

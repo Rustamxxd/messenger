@@ -5,8 +5,8 @@ import { db } from '@/lib/firebase';
 import { MdOutlineAlternateEmail, MdInfoOutline, MdNotificationsNone } from 'react-icons/md';
 import { Switch } from 'antd';
 import MediaViewer from './MediaViewer';
-import { FiLink } from 'react-icons/fi';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
+import { LuInfo } from "react-icons/lu";
 
 function extractLinks(text) {
   if (!text) return [];
@@ -49,6 +49,8 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
   const [swapDirection, setSwapDirection] = useState('right');
   const [contentVisible, setContentVisible] = useState(true);
   const prevTab = useRef(tab);
+
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   const handleLoadedMetadata = (i, e) => {
     setVideoDurations(prev => ({ ...prev, [i]: e.target.duration }));
@@ -93,6 +95,16 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     }
   }, [tab]);
 
+  // Escape для закрытия сайдбара
+  useEffect(() => {
+    if (!open) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, onClose]);
+
   let status = '';
   let statusClass = styles.userStatus;
   if (typingUsers.length > 0) {
@@ -132,6 +144,8 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     }
   }, [tab, allMedia.length, allLinks.length, voices.length]);
 
+  const defaultAvatar = "/assets/default-avatar.png";
+
   return (
     <>
       <div className={styles.overlay + (open ? ' ' + styles.open : '')} onClick={onClose} />
@@ -146,7 +160,7 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
           ref={sidebarContentRef}
         >
           <div className={styles.avatarWrapper}>
-            <img src={user?.photoURL || '/default-avatar.png'} alt="avatar" className={styles.avatar} />
+            <img src={user?.photoURL || defaultAvatar} alt="avatar" className={styles.avatar} />
             <div className={styles.profileInfo}>
               <div className={styles.displayName}>{user?.displayName || 'Пользователь'}</div>
               {status && (
@@ -159,14 +173,49 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
           </div>
           
           <div className={styles.section}>
-            <div className={styles.menuItem}>
+            <div
+              className={styles.menuItem}
+              style={{ position: 'relative', cursor: 'pointer' }}
+              title="Скопировать ник"
+              onClick={e => {
+                if (user?.displayName) {
+                  navigator.clipboard.writeText(user.displayName);
+                  setShowSnackbar(true);
+                  setTimeout(() => setShowSnackbar(false), 3000);
+                }
+                const target = e.currentTarget;
+                const circle = document.createElement('span');
+                const diameter = Math.max(target.clientWidth, target.clientHeight);
+                const radius = diameter / 2;
+                circle.className = styles.ripple;
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+                circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+                target.appendChild(circle);
+                setTimeout(() => circle.remove(), 500);
+              }}
+            >
               <span className={styles.menuIcon}><MdOutlineAlternateEmail /></span>
               <div className={styles.menuTextBlock}>
                 <span className={styles.menuMainText}>{user?.displayName || '—'}</span>
                 <span className={styles.menuSubText}>Имя пользователя</span>
               </div>
             </div>
-            <div className={styles.menuItem}>
+            <div className={styles.menuItem}
+              style={{ position: 'relative', cursor: 'pointer' }}
+              onClick={e => {
+                const target = e.currentTarget;
+                const circle = document.createElement('span');
+                const diameter = Math.max(target.clientWidth, target.clientHeight);
+                const radius = diameter / 2;
+                circle.className = styles.ripple;
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+                circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+                target.appendChild(circle);
+                setTimeout(() => circle.remove(), 500);
+              }}
+            >
               <span className={styles.menuIcon}><MdInfoOutline /></span>
               <div className={styles.menuTextBlock}>
                 <span className={styles.menuMainText}>{user?.about || '—'}</span>
@@ -317,6 +366,12 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
           </div>
         </div>
       </aside>
+      {showSnackbar && (
+        <div className={styles.snackbar}>
+          <LuInfo className={styles.snackbarIcon} />
+          Имя пользователя скопирован
+        </div>
+      )}
     </>
   );
 };

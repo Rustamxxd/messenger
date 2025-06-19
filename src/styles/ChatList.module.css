@@ -192,6 +192,8 @@
   padding: 10px;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .chatItem:hover {
@@ -453,7 +455,6 @@
   background: rgba(0,0,0,0.28);
 }
 
-/* Анимация появления/исчезновения кнопок в headerLeft */
 .headerLeft .hamburger,
 .headerLeft .backButton {
   position: absolute;
@@ -486,4 +487,37 @@
   opacity: 1;
   pointer-events: auto;
   transform: translateY(-50%) translateX(0);
+}
+
+.sendingSpinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3.5px solid #b3b3b3;
+  border-top: 3.5px solid #6ec1e4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 0.5s linear;
+  background-color: rgba(0, 15, 22, 0.18);
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }

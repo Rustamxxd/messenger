@@ -153,6 +153,21 @@ export default function ChatList({ onSelectChat }) {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        if (menuOpen) {
+          setMenuOpen(false);
+        } else if (mode === 'new' || mode === 'group') {
+          setMode(null);
+          setSelectedUsers([]);
+        }
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [menuOpen, mode, setSelectedUsers]);
+
   function getMessagePreview(msg, isSelected) {
     if (!msg) return { text: '', thumb: null };
     if (msg.fileType === 'image' && msg.text) return {
@@ -216,6 +231,7 @@ export default function ChatList({ onSelectChat }) {
         <div className={styles.searchWrapper}>
           <IoIosSearch className={styles.searchIcon} />
           <input
+            id='search'
             type="text"
             placeholder="Поиск"
             className={styles.searchInput}
@@ -271,9 +287,21 @@ export default function ChatList({ onSelectChat }) {
             return (
               <div
                 key={u.uid}
-                onClick={() =>
-                  mode === 'new' ? startNewChat(u, () => setMode(null)) : toggleUser(u)
-                }
+                onClick={e => {
+                  // Ripple effect
+                  const target = e.currentTarget;
+                  const circle = document.createElement('span');
+                  const diameter = Math.max(target.clientWidth, target.clientHeight);
+                  const radius = diameter / 2;
+                  circle.className = styles.ripple;
+                  circle.style.width = circle.style.height = `${diameter}px`;
+                  circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+                  circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+                  target.appendChild(circle);
+                  setTimeout(() => circle.remove(), 500);
+                  // Обычный клик
+                  mode === 'new' ? startNewChat(u, () => setMode(null)) : toggleUser(u);
+                }}
                 className={`${styles.chatItem} ${isSelected ? styles.selected : ''}`}
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -339,7 +367,21 @@ export default function ChatList({ onSelectChat }) {
                 <div
                   key={chat.id}
                   className={`${styles.chatItem} ${chat.id === activeChatId ? styles.selected : ''}`}
-                  onClick={() => handleSelectChat(chat)}
+                  onClick={e => {
+                    // Ripple effect
+                    const target = e.currentTarget;
+                    const circle = document.createElement('span');
+                    const diameter = Math.max(target.clientWidth, target.clientHeight);
+                    const radius = diameter / 2;
+                    circle.className = styles.ripple;
+                    circle.style.width = circle.style.height = `${diameter}px`;
+                    circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+                    circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+                    target.appendChild(circle);
+                    setTimeout(() => circle.remove(), 500);
+                    // Обычный клик
+                    handleSelectChat(chat);
+                  }}
                   onContextMenu={(e) => handleContextMenu(e, chat)}
                 >
                   <div>
@@ -369,7 +411,12 @@ export default function ChatList({ onSelectChat }) {
                       </span>
                     )}
                     <div className={styles.timeContainer}>
-                      <div>{formatDate(lastMessage?.timestamp)}</div>
+                      <div>
+                        {formatDate(lastMessage?.timestamp)}
+                        {user && lastMessage?.sender === user.uid && (!lastMessage?.timestamp || lastMessage?.id?.startsWith('temp-')) && (
+                          <span className={styles.sendingSpinner} title="Отправляется..." />
+                        )}
+                      </div>
                       {unreadCount > 0 && (
                         <div className={styles.unreadBadge}>
                           {unreadCount > 99 ? '99+' : unreadCount}

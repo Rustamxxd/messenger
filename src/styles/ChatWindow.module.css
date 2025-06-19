@@ -19,7 +19,6 @@
   border-bottom: 1px solid #ccc;
 }
 
-
 .avatar {
   width: 40px;
   height: 40px;
@@ -140,15 +139,30 @@
   padding: 6px 10px;
 }
 
-.inputBubble textarea::placeholder {
+.animatedPlaceholder {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%) translateX(0);
   color: #999;
-  font-size: 15px;
+  font-size: 16px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 2;
+  white-space: nowrap;
+  font-family: "Segoe UI", sans-serif;
+}
+.placeholderHidden {
+  opacity: 0;
+  transform: translateY(-50%) translateX(40px);
 }
 
 .emojiPicker {
   position: absolute;
   bottom: 60px;
   left: 10px;
+  z-index: 1000;
 }
 
 .contextMenu {
@@ -159,15 +173,30 @@
   backdrop-filter: blur(10px);
   padding: 6px 0;
   list-style: none;
-  width: 150px;
   font-size: 14px;
   z-index: 2000;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(.4,0,.2,1), transform 0.22s cubic-bezier(.4,0,.2,1);
+}
+.contextMenuVisible {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+}
+.contextMenuHidden {
+  opacity: 0 !important;
+  transform: translateY(10px) scale(0.98) !important;
+  pointer-events: none !important;
 }
 .contextMenu li {
   padding: 8px 14px;
   cursor: pointer;
   transition: 0.2s ease-in-out;
   border-radius: 15px;
+  font-weight: 600;
+  font-family: "Segoe UI", sans-serif;
 }
 
 .contextMenu li:hover {
@@ -181,20 +210,8 @@
   gap: 10px;
 }
 
-.reply {
-  font-size: 15px;
-}
-
-.edit {
-  font-size: 20px;
-}
-
-.delete {
-  font-size: 19px;
-  color: red;
-}
-
-.empty {display: inline-block;
+.empty {
+  display: inline-block;
   font-family: "Segoe UI", sans-serif;
   padding: 4px 12px;
   margin: 20px auto;
@@ -273,13 +290,25 @@
 }
 
 .replyCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  background: transparent;
+  background: none;
+  z-index: 1;
+  border-radius: 50%;
   font-size: 22px;
-  padding-left: 5px;
   color: #008316;
   cursor: pointer;
   z-index: 2000;
+  transition: 0.2s ease-in;
+  width: 20px;
+  height: 20px;
+}
+
+.replyCancel:hover {
+  color: #00a31b;
+  background: #d4d4d4;
 }
 
 .dateDivider {
@@ -517,23 +546,6 @@
   transition: filter 0.3s;
 }
 
-.animatedPlaceholder {
-  position: absolute;
-  left: 50px;
-  top: 50%;
-  transform: translateY(-50%) translateX(0);
-  color: #999;
-  font-size: 15px;
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.3s, transform 0.3s;
-  z-index: 2;
-  white-space: nowrap;
-}
-.placeholderHidden {
-  opacity: 0;
-  transform: translateY(-50%) translateX(40px);
-}
 
 .iconSwitch {
   position: absolute;
@@ -556,4 +568,237 @@
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, -50%) scale(1);
+}
+
+.contextMenuCopyDisabled {
+  color: #b0b0b0;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.messageContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.messageContainer .own {
+  align-self: flex-end;
+}
+
+.messageContainer.contextMenuActive::before,
+.messageContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -380px;
+  width: 77.1vw;
+  height: 104%;
+  transform: translateY(-2.2%);
+  background: rgba(0, 0, 0, 0.151);
+  z-index: 1;
+  transition: background 0.25s cubic-bezier(.4,0,.2,1), opacity 0.25s cubic-bezier(.4,0,.2,1);
+}
+.messageContainer.contextMenuActive::before {
+  opacity: 1;
+}
+.messageContainer::before {
+  opacity: 0;
+}
+
+.multiSelectCheckbox {
+  position: absolute;
+  left: -36px;
+  top: 45%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: transparent;
+  box-sizing: border-box;
+  opacity: 0;
+  z-index: 3;
+  transition: opacity 0.25s cubic-bezier(.4,0,.2,1), transform 0.25s cubic-bezier(.4,0,.2,1), border-color 0.2s, background 0.22s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.8);
+}
+.multiSelectCheckboxActive {
+  opacity: 1;
+  transform: scale(1.3);
+  pointer-events: auto;
+}
+.multiSelectCheckbox.checked {
+  background: #0088cc;
+}
+.multiSelectCheckbox.checked::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 6px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: translate(-50%, -60%) rotate(-45deg) scale(1.1);
+  border-radius: 1px;
+  opacity: 1;
+  transition: opacity 0.22s cubic-bezier(.4,0,.2,1);
+}
+.multiSelectCheckbox::after {
+  opacity: 0;
+  transition: opacity 0.22s cubic-bezier(.4,0,.2,1);
+}
+
+.multiSelectBar {
+  position: relative;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 13px;
+  min-height: 56px;
+  gap: 12px;
+  animation: fadeIn 0.22s cubic-bezier(.4,0,.2,1);
+  width: 100%;
+  max-width: 632px;
+  margin: 0 auto;
+  transition: opacity 0.22s cubic-bezier(.4,0,.2,1), transform 0.22s cubic-bezier(.4,0,.2,1);
+}
+.multiSelectBarHidden {
+  opacity: 0;
+  transform: translateY(20%);
+}
+.multiSelectClose {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  transform: translate(1px, 1px);
+  margin-right: 10px;
+  transition: 0.2s ease-in;
+}
+.multiSelectClose:hover {
+  color: #e53935;
+}
+
+.multiSelectCount {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  flex: 1;
+  overflow: hidden;
+  flex-grow: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.multiSelectActions {
+  display: flex;
+  gap: 8px;
+}
+
+.multiSelectAction {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 7px;
+  transition: background 0.18s, color 0.18s;
+}
+
+.multiCopy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 50%;
+  transition: background 0.2s;
+  width: 35px;
+  height: 35px;
+}
+
+.multiCopy:hover {
+  background: #f2f2f2;
+  color: #0088cc;
+}
+
+.multiDelete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 50%;
+  transition: background 0.2s;
+  width: 35px;
+  height: 35px;
+}
+
+.multiDelete:hover {
+  background: #f2f2f2;
+  color: #e53935;
+}
+
+.deletingSpinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #ccc;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.snackbar {
+  position: fixed;
+  left: 50%;
+  top: 50px;
+  transform: translateX(-50%) translateY(-24px);
+  background: rgba(40, 40, 40, 0.95);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 16px;
+  font-size: 1.08rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: snackbar-fadein-top 0.25s, snackbar-fadeout-top 0.25s 2.75s;
+  pointer-events: none;
+  font-family: "Segoe UI", sans-serif;
+}
+@keyframes snackbar-fadein-top {
+  from { opacity: 0; transform: translateX(-50%) translateY(-24px);}
+}
+
+.snackbarIcon {
+  font-size: 1.3em;
+  color: #fff;
+  opacity: 0.8;
 }

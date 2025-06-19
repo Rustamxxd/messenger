@@ -174,21 +174,6 @@
   transform: scale(1.03);
 }
 
-.successMessage {
-  text-align: center;
-  animation: fade-in-out 3s ease-in-out forwards;
-  color: green;
-  font-weight: 500;
-  margin-bottom: 10px;
-}
-
-@keyframes fade-in-out {
-  0% { opacity: 0; transform: translateY(-10px); }
-  10% { opacity: 1; transform: translateY(0); }
-  90% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-10px); }
-}
-
 .confirm {
   font-size: 20px;
   font-weight: bold;
@@ -211,4 +196,34 @@
   color: red;
   font-size: 0.875rem;
   margin-top: 4px;
+}
+
+.snackbar {
+  position: fixed;
+  left: 50%;
+  top: 50px;
+  transform: translateX(-50%) translateY(-24px);
+  background: rgba(40, 40, 40, 0.95);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 16px;
+  font-size: 1.08rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: snackbar-fadein-top 0.25s, snackbar-fadeout-top 0.25s 2.75s;
+  pointer-events: none;
+  font-family: "Segoe UI", sans-serif;
+}
+
+@keyframes snackbar-fadein-top {
+  from { opacity: 0; transform: translateX(-50%) translateY(-24px);}
+}
+
+.snackbarIcon {
+  font-size: 1.3em;
+  color: #fff;
+  opacity: 0.8;
 }

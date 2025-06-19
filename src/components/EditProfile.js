@@ -13,7 +13,7 @@ import { FaRegSave, FaCamera } from "react-icons/fa";
 import { IoExitOutline } from "react-icons/io5";
 import styles from "@/styles/EditProfile.module.css";
 import LoadingDots from "./LoadingDots";
-
+import { LuInfo } from "react-icons/lu";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 
@@ -26,7 +26,7 @@ export default function EditProfile() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -71,11 +71,11 @@ export default function EditProfile() {
           photoURL: avatarUrl,
         }));
 
-        setSuccessMessage("Профиль успешно обновлён!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+        setShowSnackbar(true);
+        setTimeout(() => setShowSnackbar(false), 3000);
       } catch (error) {
         console.error("Ошибка обновления профиля:", error);
-        setSuccessMessage("Ошибка при сохранении");
+        setShowSnackbar("Ошибка при сохранении");
       } finally {
         setLoading(false);
       }
@@ -123,7 +123,12 @@ export default function EditProfile() {
 
   return (
     <div className={styles.container}>
-      {successMessage && <p className={styles.successMessage}>{successMessage}</p>}
+      {showSnackbar && (
+        <div className={styles.snackbar}>
+          <LuInfo className={styles.snackbarIcon} />
+          Профиль успешно обновлён!
+        </div>
+      )}
 
       <h1 className={styles.title}>Редактировать профиль</h1>
 

@@ -5,6 +5,7 @@ import { LuCheck, LuCheckCheck } from "react-icons/lu";
 import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
 import { renderTextWithLinks, processLinks } from "@/utils/linkUtils";
 import LinkText from "./LinkText";
+import { Checkbox } from 'antd';
 
 const Message = ({
   message,
@@ -19,6 +20,9 @@ const Message = ({
   isEditing,
   onSaveEdit,
   onCancelEdit,
+  selected,
+  onSelectMessage,
+  multiSelectMode,
 }) => {
   const [editedText, setEditedText] = useState(message.text);
   const textareaRef = useRef(null);
@@ -77,7 +81,6 @@ const Message = ({
     <div
       id={`message-${message.id}`}
       className={`${styles.message} ${isOwn ? styles.own : ""}`}
-      onContextMenu={(e) => onContextMenu(e, message)}
     >
       <div className={styles.messageColumn}>
         {message.replyTo && (
@@ -194,6 +197,9 @@ const Message = ({
               {message.edited ? <span className={styles.edited}>изменено</span> : ""}
             <span className={styles.time}>
               {formatTime(message.timestamp)}{" "}
+              {isOwn && !message.deleted && (!message.id || message.id.startsWith('temp-') || !message.timestamp) && (
+                <span className={styles.sendingSpinner} title="Отправляется..." />
+              )}
             </span>
             {isOwn && !message.deleted && (
               <span className={styles.readStatus}>
