@@ -85,6 +85,11 @@ const ChatInput = ({
     setFile?.(null);
   };
 
+  const handlePaste = async (e) => {
+    // Логика обработки изображений теперь в глобальном обработчике
+    // Этот обработчик оставлен для совместимости
+  };
+
   const handleSend = async () => {
     const hasText = newMessage.trim().length > 0;
     const hasVoice = Boolean(audioBlob);
@@ -138,6 +143,28 @@ const ChatInput = ({
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
   }, [replyTo, multiSelectMode, onExitMultiSelect, onClearSelectedMessage]);
+
+  // Глобальный обработчик вставки
+  useEffect(() => {
+    const handleGlobalPaste = async (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            setPendingFile(file);
+            setShowMediaModal(true);
+          }
+          break;
+        }
+      }
+    };
+
+    document.addEventListener('paste', handleGlobalPaste);
+    return () => document.removeEventListener('paste', handleGlobalPaste);
+  }, []);
 
   return (
     <div className={styles.inputArea}>
@@ -237,6 +264,7 @@ const ChatInput = ({
               id='message'
               value={newMessage}
               onChange={handleInputChange}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey && !isRecording) {
                   e.preventDefault();

@@ -7,7 +7,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-family: "Segoe UI", sans-serif;
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -73,7 +72,7 @@
 }
 
 .onlineStatus {
-  color: #1ec742;
+  color: rgba(51, 144, 236, 1);
   font-weight: 500;
 }
 
@@ -151,7 +150,6 @@
   transition: opacity 0.3s, transform 0.3s;
   z-index: 2;
   white-space: nowrap;
-  font-family: "Segoe UI", sans-serif;
 }
 .placeholderHidden {
   opacity: 0;
@@ -196,7 +194,6 @@
   transition: 0.2s ease-in-out;
   border-radius: 15px;
   font-weight: 600;
-  font-family: "Segoe UI", sans-serif;
 }
 
 .contextMenu li:hover {
@@ -212,7 +209,6 @@
 
 .empty {
   display: inline-block;
-  font-family: "Segoe UI", sans-serif;
   padding: 4px 12px;
   margin: 20px auto;
   text-align: center;
@@ -321,7 +317,6 @@
   font-size: 14px;
   font-weight: 500;
   text-transform: capitalize;
-  font-family: "Segoe UI", sans-serif;
   line-height: 1.4;
   border-radius: 12px;
 }
@@ -701,7 +696,6 @@
   flex-grow: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Segoe UI", sans-serif;
 }
 
 .multiSelectActions {
@@ -791,7 +785,6 @@
   gap: 12px;
   animation: snackbar-fadein-top 0.25s, snackbar-fadeout-top 0.25s 2.75s;
   pointer-events: none;
-  font-family: "Segoe UI", sans-serif;
 }
 @keyframes snackbar-fadein-top {
   from { opacity: 0; transform: translateX(-50%) translateY(-24px);}

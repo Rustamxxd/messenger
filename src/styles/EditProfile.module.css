@@ -215,7 +215,6 @@
   gap: 12px;
   animation: snackbar-fadein-top 0.25s, snackbar-fadeout-top 0.25s 2.75s;
   pointer-events: none;
-  font-family: "Segoe UI", sans-serif;
 }
 
 @keyframes snackbar-fadein-top {

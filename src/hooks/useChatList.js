@@ -49,23 +49,13 @@ export function useChatList(user) {
           const usersSnapshot = await getDocs(collection(db, 'users'));
           const usersMap = {};
           usersSnapshot.forEach(doc => {
-            usersMap[doc.id] = doc.data();
+            usersMap[doc.id] = { uid: doc.id, ...doc.data() };
           });
 
           const enrichedChats = await Promise.all(
             getUniqueChats(userChats).map(async (chat) => {
               const isGroup = chat.members.length > 2;
               let displayName, photoURL;
-
-              if (isGroup) {
-                displayName = chat.name || 'Групповой чат';
-                photoURL = null;
-              } else {
-                const otherUserId = chat.members.find(id => id !== user.uid);
-                const otherUser = usersMap[otherUserId];
-                displayName = otherUser?.displayName || otherUser?.email || 'Unknown';
-                photoURL = otherUser?.photoURL || null;
-              }
 
               const allMessagesSnapshot = await getDocs(
                 collection(db, 'chats', chat.id, 'messages')
@@ -108,16 +98,49 @@ export function useChatList(user) {
                 if (isUnread) unreadCount += 1;
               });
 
-              return {
-                ...chat,
-                displayName,
-                photoURL,
-                lastMessage,
-                unreadCount,
-                unreadForOther,
-                checkmarkStatus,
-                isGroup
-              };
+              if (isGroup) {
+                displayName = chat.name || 'Групповой чат';
+                photoURL = chat.photoURL || null;
+                
+                const groupMembers = chat.members.map(memberId => {
+                  const memberData = usersMap[memberId] || {};
+                  return {
+                    id: memberId,
+                    displayName: memberData.displayName || memberData.email || 'Участник',
+                    photoURL: memberData.photoURL,
+                    lastSeen: memberData.lastSeen || null,
+                    status: memberData.status,
+                    role: chat.ownerId === memberId ? 'owner' : (chat.admins?.includes(memberId) ? 'admin' : 'member')
+                  };
+                });
+                
+                return {
+                  ...chat,
+                  displayName,
+                  photoURL,
+                  members: groupMembers,
+                  lastMessage,
+                  unreadCount,
+                  unreadForOther,
+                  checkmarkStatus,
+                  isGroup
+                };
+              } else {
+                const otherUserId = chat.members.find(id => id !== user.uid);
+                const otherUser = usersMap[otherUserId] || {};
+                
+                return {
+                  ...chat,
+                  ...otherUser,
+                  displayName: otherUser.displayName || otherUser.email || 'Неизвестный',
+                  photoURL: otherUser.photoURL || null,
+                  lastMessage,
+                  unreadCount,
+                  unreadForOther,
+                  checkmarkStatus,
+                  isGroup
+                };
+              }
             })
           );
 

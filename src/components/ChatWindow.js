@@ -16,7 +16,7 @@ import { CloseOutlined, DeleteOutlined, CopyOutlined } from '@ant-design/icons';
 import { getUserProfile } from "../lib/firebase";
 import { LuInfo } from "react-icons/lu";
 
-const ChatWindow = ({ chatId }) => {
+const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
   const {
     messages,
     otherUser,
@@ -353,22 +353,25 @@ const ChatWindow = ({ chatId }) => {
     setTimeout(() => setShowSnackbar(false), 3000);
   };
 
+  useEffect(() => {
+    if (onTypingUsers) {
+      onTypingUsers(typingUsers);
+    }
+  }, [typingUsers, onTypingUsers]);
+
+  useEffect(() => {
+    if (onMessages) {
+      onMessages(messages);
+    }
+  }, [messages, onMessages]);
+
   return (
-    <div className={styles.windowWrapper + (sidebarOpen ? ' ' + styles.sidebarOpen : '')}>
-      <ProfileSidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        user={otherUser}
-        typingUsers={typingUsers}
-        allMessages={messages}
-        currentUserId={user?.uid}
-        onScrollToMessage={handleScrollToMessage}
-      />
+    <div className={styles.windowWrapper}>
       <div className={styles.chatMain}>
         <ChatHeader
           otherUser={otherUser}
           typingUsers={typingUsers}
-          onAvatarOrNameClick={handleHeaderClick}
+          onAvatarOrNameClick={onHeaderClick}
         />
         <MessageList
           messages={filteredMessages}

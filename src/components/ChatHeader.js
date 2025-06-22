@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import LoadingDots from "./LoadingDots";
-import UserAvatar from './UserAvatar';
 
 const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrNameClick }) => {
   const router = useRouter();
@@ -15,7 +14,7 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
   const defaultAvatar = "/assets/default-avatar.png";
 
   useEffect(() => {
-    setOtherUser(initialOtherUser); // Сбрасываем состояние при смене пользователя
+    setOtherUser(initialOtherUser);
     
     if (!initialOtherUser?.uid) return;
 
@@ -45,7 +44,7 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
     const now = new Date();
     const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
 
-    if (diffMinutes < 5) {
+    if (diffMinutes < 1) {
       status = 'в сети';
       statusClass += ' ' + styles.onlineStatus;
     } else {
@@ -53,24 +52,16 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
     }
   }
 
-  const handleClick = () => {
-    if (otherUser?.isGroup && otherUser?.id) {
-      router.push(`/groups/${otherUser.id}/edit`);
-    }
-  };
-
   const displayUser = otherUser || initialOtherUser;
 
   return (
     <div
       className={styles.header}
-      onClick={handleClick}
       style={{ cursor: displayUser?.isGroup ? "pointer" : "default" }}
     >
       {displayUser?.isGroup ? (
         <>
           <div className={styles.avatar} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
-            <MultiAvatar users={displayUser.members?.slice(0, 4)} size={40} />
           </div>
           <div className={styles.userName} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
             {displayUser.displayName || "Группа"}

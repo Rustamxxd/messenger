@@ -7,15 +7,12 @@ import { Switch } from 'antd';
 import MediaViewer from './MediaViewer';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { LuInfo } from "react-icons/lu";
+import LoadingDots from './LoadingDots';
 
 function extractLinks(text) {
   if (!text) return [];
   const urlRegex = /(@?https?:\/\/[^\s]+|@?https?:\/[^\s]+|@?www\.[^\s]+|@?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s]*)/g;
   return text.match(urlRegex) || [];
-}
-
-function LoadingDots() {
-  return <span className={styles.dots}>...</span>;
 }
 
 function getDomain(url) {
@@ -107,6 +104,7 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
 
   let status = '';
   let statusClass = styles.userStatus;
+
   if (typingUsers.length > 0) {
     status = 'печатает';
     statusClass += ' ' + styles.typingStatus;
@@ -114,7 +112,8 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     const lastSeen = user.lastSeen?.toDate?.() || user.lastSeen;
     const now = new Date();
     const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
-    if (diffMinutes < 5) {
+
+    if (diffMinutes < 1) {
       status = 'в сети';
       statusClass += ' ' + styles.onlineStatus;
     } else {

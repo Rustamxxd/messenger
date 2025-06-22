@@ -49,13 +49,54 @@ const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, o
     };
   }, [onClose]);
 
-  const handleCopyText = () => {
-    if (selectedMessage?.text) {
+  const handleCopyContent = async () => {
+    if (!selectedMessage) return;
+    
+    if (selectedMessage.fileType === 'image') {
+      try {
+        // Копируем изображение в буфер обмена
+        const response = await fetch(selectedMessage.text);
+        const blob = await response.blob();
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        if (onCopyText) onCopyText();
+        setIsVisible(false);
+        setTimeout(onClose, 200);
+      } catch (error) {
+        console.error('Ошибка при копировании изображения:', error);
+        // Fallback: копируем URL изображения
+        navigator.clipboard.writeText(selectedMessage.text);
+        if (onCopyText) onCopyText();
+        setIsVisible(false);
+        setTimeout(onClose, 200);
+      }
+    } else if (selectedMessage.text) {
+      // Для текстовых сообщений копируем текст
       navigator.clipboard.writeText(selectedMessage.text);
       if (onCopyText) onCopyText();
       setIsVisible(false);
       setTimeout(onClose, 200);
     }
+  };
+
+  const getCopyText = () => {
+    if (!selectedMessage) return 'Копировать';
+    
+    if (selectedMessage.fileType === 'image') {
+      return 'Копировать изображение';
+    } else {
+      return 'Копировать текст';
+    }
+  };
+
+  const shouldShowCopy = () => {
+    if (!selectedMessage) return false;
+    
+    // Показываем копирование только для фото и текстовых сообщений
+    return selectedMessage.fileType === 'image' || !selectedMessage.fileType;
   };
 
   if (!contextMenu.visible && !isVisible) return null;
@@ -88,6 +129,8 @@ const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, o
             } else {
               onEdit?.(selectedMessage);
             }
+            setIsVisible(false);
+            setTimeout(onClose, 200);
           }}
         >
           <span className={styles.contextItem}>
@@ -96,15 +139,16 @@ const ContextMenu = ({ contextMenu, selectedMessage, onClose, onReply, onEdit, o
           </span>
         </li>
       )}
+      {shouldShowCopy() && (
       <li
-        onClick={selectedMessage && !['image','video','audio'].includes(selectedMessage.fileType) && selectedMessage.text ? handleCopyText : undefined}
-        className={selectedMessage && (!selectedMessage.text || ['image','video','audio'].includes(selectedMessage.fileType)) ? styles.contextMenuCopyDisabled : undefined}
+          onClick={handleCopyContent}
       >
         <span className={styles.contextItem}>
         <MdContentCopy  style={{fontSize: '20px', color: '#666'}}/>
-          Копировать текст
+            {getCopyText()}
         </span>
       </li>
+      )}
       <li
         onClick={() => {
           onSelect?.(selectedMessage.id);

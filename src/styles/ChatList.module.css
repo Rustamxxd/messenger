@@ -140,7 +140,7 @@
 
 .menuItem:hover {
   background: rgba(243, 243, 243, 0.527);
-  transform: scale(1.05);
+  transform: scale(1.01);
 }
 
 .avatar {
