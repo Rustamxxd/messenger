@@ -29,6 +29,9 @@
 .userName {
   font-weight: bold;
   font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .messages {
@@ -794,4 +797,7 @@
   font-size: 1.3em;
   color: #fff;
   opacity: 0.8;
+}.memberCount {
+  font-size: 14px;
+  color: #888;
 }

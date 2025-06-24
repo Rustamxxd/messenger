@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { signOut, deleteUser } from "firebase/auth";
@@ -26,7 +26,11 @@ export default function EditProfile() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [deleteModalOpening, setDeleteModalOpening] = useState(false);
+  const [deleteModalClosing, setDeleteModalClosing] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [nameFocused, setNameFocused] = useState(false);
+  const [aboutFocused, setAboutFocused] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -100,8 +104,23 @@ export default function EditProfile() {
     }
   };
 
-  const showDeleteModal = () => setIsDeleteModalVisible(true);
-  const handleCancelDelete = () => setIsDeleteModalVisible(false);
+  const showDeleteModal = () => {
+    setIsDeleteModalVisible(true);
+    setDeleteModalClosing(false);
+    setTimeout(() => setDeleteModalOpening(true), 0);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalClosing(true);
+    setDeleteModalOpening(false);
+  };
+
+  const handleDeleteModalTransitionEnd = (e) => {
+    if (deleteModalClosing && e.propertyName === 'opacity') {
+      setIsDeleteModalVisible(false);
+      setDeleteModalClosing(false);
+    }
+  };
 
   const handleConfirmDelete = async () => {
     try {
@@ -147,36 +166,56 @@ export default function EditProfile() {
       </div>
 
       <form onSubmit={formik.handleSubmit} className={styles.form}>
-      {formik.touched.displayName && formik.errors.displayName && (
+        {formik.touched.displayName && formik.errors.displayName && (
           <div className={styles.error}>{formik.errors.displayName}</div>
         )}
-        <input
-          type="text"
-          name="displayName"
-          value={formik.values.displayName}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          placeholder="Имя пользователя"
-          maxLength={20}
-          className={styles.input}
-        />
-
+        <div className={styles.floatingInputWrapper}>
+          <label
+            className={
+              styles.floatingLabel +
+              ((nameFocused || formik.values.displayName) ? ' ' + styles.floatingLabelActive : '')
+            }
+            htmlFor="displayName"
+          >Имя пользователя</label>
+          <input
+            type="text"
+            name="displayName"
+            id="displayName"
+            value={formik.values.displayName}
+            onChange={formik.handleChange}
+            onBlur={e => { formik.handleBlur(e); setNameFocused(false); }}
+            onFocus={() => setNameFocused(true)}
+            maxLength={20}
+            className={styles.input}
+          />
+          <div className={styles.charCount}>
+            {20 - formik.values.displayName.length}
+          </div>
+        </div>
         {formik.touched.about && formik.errors.about && (
           <div className={styles.error}>{formik.errors.about}</div>
         )}
-        
-        <div className={styles.textareaWrapper}>
+        <div className={styles.floatingInputWrapper}>
+          <label
+            className={
+              styles.floatingLabel +
+              ((aboutFocused || formik.values.about) ? ' ' + styles.floatingLabelActive : '')
+            }
+            htmlFor="about"
+          >О себе</label>
           <textarea
             name="about"
-            placeholder="О себе"
+            id="about"
             value={formik.values.about}
-            onChange={(e) => {
+            onChange={e => {
               if (e.target.value.length <= 70) {
                 formik.handleChange(e);
               }
             }}
-            onBlur={formik.handleBlur}
+            onBlur={e => { formik.handleBlur(e); setAboutFocused(false); }}
+            onFocus={() => setAboutFocused(true)}
             className={styles.textarea}
+            maxLength={70}
           />
           <div className={styles.charCount}>
             {70 - formik.values.about.length}
@@ -202,20 +241,31 @@ export default function EditProfile() {
         <MdDeleteOutline /> Удалить аккаунт
       </button>
 
-      <Modal
-        title="Удалить аккаунт"
-        open={isDeleteModalVisible}
-        onOk={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        okText="Удалить"
-        cancelText="Отмена"
-        okButtonProps={{ danger: true }}
-      >
-        <p className={styles.confirm}>
-          Вы уверены, что хотите удалить аккаунт? <br />
-          Это действие необратимо.
-        </p>
-      </Modal>
+      {isDeleteModalVisible && (
+        <div
+          className={
+            styles.customModalOverlay + ' ' +
+            (deleteModalClosing
+              ? styles.modalClosed
+              : deleteModalOpening
+                ? styles.modalOpen
+                : styles.modalClosed)
+          }
+          onTransitionEnd={handleDeleteModalTransitionEnd}
+        >
+          <div className={styles.customModal}>
+            <h2 className={styles.modalTitle}>Удалить аккаунт</h2>
+            <p className={styles.confirm}>
+              Вы уверены, что хотите удалить аккаунт? <br />
+              Это действие необратимо.
+            </p>
+            <div className={styles.modalBtnRow}>
+              <button className={styles.modalBtnDanger} onClick={handleConfirmDelete}>Удалить</button>
+              <button className={styles.modalBtnCancel} onClick={handleCancelDelete}>Отмена</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

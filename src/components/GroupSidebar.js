@@ -176,7 +176,22 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
           <div className={styles.avatarWrapper}>
             <img src={group.photoURL || defaultAvatar} alt="avatar" className={styles.avatar} />
             <div className={styles.profileInfo}>
-              <div className={styles.displayName}>{group.name || 'Группа'}</div>
+              <div
+                className={styles.displayName}
+                onClick={() => {
+                  if (group.name) {
+                    navigator.clipboard.writeText(group.name);
+                    setShowSnackbar(true);
+                    setTimeout(() => setShowSnackbar(false), 3000);
+                  }
+                }}
+                
+              >
+                {group.name || 'Группа'}
+              </div>
+              <div className={styles.memberCount}>
+                {group.members?.length || 0} участник{group.members?.length === 1 ? '' : group.members?.length < 5 && group.members?.length > 1 ? 'а' : 'ов'}
+              </div>
               {group.description && (
                 <div className={styles.userStatus}>{group.description}</div>
               )}
@@ -411,7 +426,7 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
       {showSnackbar && (
         <div className={styles.snackbar}>
           <LuInfo className={styles.snackbarIcon} />
-          Информация скопирована
+          Скопировано в буфер обмена!
         </div>
       )}
     </>

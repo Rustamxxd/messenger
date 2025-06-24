@@ -294,6 +294,10 @@
 }
 
 .continueButton {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  z-index: 2002;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -304,10 +308,6 @@
   background-color: #0088cc;
   color: white;
   cursor: pointer;
-  position: sticky;
-  bottom: 10px;
-  right: 20px;
-  margin-left: auto;
   transition: 0.2s ease-in-out;
 }
 
@@ -355,6 +355,23 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
+  opacity: 0;
+  transform: scale(0.95) translateY(20px);
+  pointer-events: none;
+  transition:
+    opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1),
+    transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 3000;
+}
+.contextMenu.modalOpen {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+.contextMenu.modalClosed {
+  opacity: 0;
+  transform: scale(0.95) translateY(20px);
+  pointer-events: none;
 }
 .contextMenuItem {
   color: #e53935;
@@ -370,7 +387,7 @@
 }
 
 .contextMenuItem:hover {
-  background-color: #f0f0f0;
+  background-color: #f0f0f093;
 }
 
 .deleteIcon {
@@ -520,4 +537,151 @@
     transform: scale(2.5);
     opacity: 0;
   }
+}
+.customModalOverlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.18);
+  z-index: 9999;
+  display: flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.customModalOverlay.modalOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.customModalOverlay.modalClosed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.customModal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 15px 15px 0 15px;
+  width: 330px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  transform: scale(0.95) translateY(40px);
+  opacity: 0;
+  transition:
+    opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+    transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.customModalOverlay.modalOpen .customModal {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.customModalOverlay.modalClosed .customModal {
+  opacity: 0;
+  transform: scale(0.95) translateY(40px);
+}
+
+.modalAvatarImg2 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.modalAvatarBig {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #4caf50;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.modalHeaderRow {
+  display: flex;
+  gap: 10px;
+}
+
+.modalTitle2 {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.modalDesc2 {
+  margin-bottom: 22px;
+  margin-left: 5px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.modalBtnRow {
+  display: flex;
+  justify-content: end;
+  align-items: end;
+  flex-direction: column;
+}
+
+.modalBtn2 {
+  border: none;
+  background: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #e53935;
+  transition: background 0.15s;
+}
+
+.modalBtnDanger2:hover {
+  background: #ffeaea;
+}
+
+.modalBtnCancel2 {
+  color: #0088cc;
+  margin-bottom: 10px;
+}
+
+.modalBtnCancel2:hover {
+  background: #eaf6ff;
+}
+
+.snackbar {
+  position: fixed;
+  left: 50%;
+  top: 50px;
+  transform: translateX(-50%) translateY(-24px);
+  background: rgba(40, 40, 40, 0.95);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 16px;
+  font-size: 1.08rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: snackbar-fadein-top 0.25s, snackbar-fadeout-top 0.25s 1.25s;
+  pointer-events: none;
+}
+@keyframes snackbar-fadein-top {
+  from { opacity: 0; transform: translateX(-50%) translateY(-24px);}
+}
+
+.snackbarIcon {
+  font-size: 1.3em;
+  color: #fff;
+  opacity: 0.8;
 }

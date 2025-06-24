@@ -33,6 +33,7 @@ const ChatInput = ({
   onCopySelected,
   isDeleting,
   onClearSelectedMessage,
+  handleTyping,
 }) => {
   const {
     isRecording,
@@ -166,6 +167,16 @@ const ChatInput = ({
     return () => document.removeEventListener('paste', handleGlobalPaste);
   }, []);
 
+  // Снятие статуса печатает при размонтировании и уходе пользователя
+  useEffect(() => {
+    const handleBlur = () => handleTyping?.(false);
+    window.addEventListener('beforeunload', handleBlur);
+    return () => {
+      handleTyping?.(false);
+      window.removeEventListener('beforeunload', handleBlur);
+    };
+  }, [handleTyping]);
+
   return (
     <div className={styles.inputArea}>
       <input type="file" hidden onChange={handleFileChangeModal} />
@@ -275,6 +286,8 @@ const ChatInput = ({
               }}
               placeholder=""
               className={isRecording ? styles.shrinkedTextarea : ""}
+              onFocus={() => handleTyping?.(true)}
+              onBlur={() => handleTyping?.(false)}
             />
 
             {!isRecording && (

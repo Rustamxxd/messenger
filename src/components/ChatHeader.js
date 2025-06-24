@@ -61,10 +61,25 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
     >
       {displayUser?.isGroup ? (
         <>
-          <div className={styles.avatar} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
-          </div>
-          <div className={styles.userName} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
-            {displayUser.displayName || "Группа"}
+          <img
+            src={displayUser?.photoURL || defaultAvatar}
+            alt="Avatar"
+            className={styles.avatar}
+            onClick={onAvatarOrNameClick}
+            style={{ cursor: 'pointer' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className={styles.userName} onClick={onAvatarOrNameClick} style={{ cursor: 'pointer' }}>
+              {displayUser.displayName || "Группа"}
+            </span>
+            <span className={styles.memberCount}>
+              {displayUser.members?.length || 0} участник
+              {displayUser.members?.length === 1
+                ? ''
+                : displayUser.members?.length < 5 && displayUser.members?.length > 1
+                ? 'а'
+                : 'ов'}
+            </span>
           </div>
         </>
       ) : (

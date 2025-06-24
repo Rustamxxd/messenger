@@ -11,7 +11,8 @@ import {
   query,
   where
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export function useChatActions(user, onSelectChat) {
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -83,21 +84,45 @@ export function useChatActions(user, onSelectChat) {
     );
   };
 
-  const createGroupChat = async (selectedUsers, groupName) => {
+  // Функция для загрузки group avatar
+  async function uploadGroupAvatar(file) {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `group_avatars/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+  }
+
+  const createGroupChat = async (selectedUsers, groupName, groupAvatar, groupDescription) => {
     try {
       if (selectedUsers.length < 2) {
-        alert('Выберите хотя бы двух пользователей');
-        return false;
+        return 'notEnoughUsers';
       }
-
-      const memberIds = [user.uid, ...selectedUsers.map((u) => u.uid)];
-      const docRef = await addDoc(collection(db, 'chats'), {
+      let photoURL = null;
+      if (groupAvatar) {
+        photoURL = await uploadGroupAvatar(groupAvatar);
+      }
+      const members = [
+        {
+          id: user.uid,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: 'owner',
+        },
+        ...selectedUsers.map(u => ({
+          id: u.uid,
+          displayName: u.displayName,
+          photoURL: u.photoURL,
+          role: 'member',
+        }))
+      ];
+      await addDoc(collection(db, 'chats'), {
         name: groupName,
-        members: memberIds,
+        members,
+        photoURL,
+        description: groupDescription || '',
         timestamp: serverTimestamp(),
       });
-
-      onSelectChat({ id: docRef.id });
       return true;
     } catch (error) {
       console.error('Ошибка при создании группового чата:', error);
@@ -123,6 +148,17 @@ export function useChatActions(user, onSelectChat) {
     }
   };
 
+  const handleDeleteChatForAll = async (chatId) => {
+    const chatRef = doc(db, 'chats', chatId);
+    // Удаляем все сообщения из подколлекции
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const messagesSnapshot = await getDocs(messagesRef);
+    const deletePromises = messagesSnapshot.docs.map((msgDoc) => deleteDoc(msgDoc.ref));
+    await Promise.all(deletePromises);
+    await deleteDoc(chatRef);
+    console.log(`Чат ${chatId} удален для всех`);
+  };
+
   return {
     selectedUsers,
     setSelectedUsers,
@@ -131,5 +167,6 @@ export function useChatActions(user, onSelectChat) {
     resetUnreadCount,
     toggleUser,
     handleDeleteChat,
+    handleDeleteChatForAll,
   };
 }

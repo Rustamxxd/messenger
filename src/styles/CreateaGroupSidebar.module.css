@@ -1,0 +1,343 @@
+.createGroupSidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 945px;
+    background: #fff;
+    box-shadow: -2px 0 16px rgba(0,0,0,0.08);
+    z-index: 2001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 0px 24px;
+    animation: sidebar-slide-in 0.3s cubic-bezier(.4,0,.2,1);
+    border-left: 1px solid #eee;
+    transition: right 0.33s cubic-bezier(.4,0,.2,1), opacity 0.33s cubic-bezier(.4,0,.2,1);
+  }
+
+  .closeBtn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    margin-right: 8px;
+    background: none;
+    border: none;
+    font-size: 2.1rem;
+    color: #888;
+    cursor: pointer;
+    z-index: 1;
+    border-radius: 50%;
+    transition: background 0.2s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 5px;
+  }
+  
+  .closeBtn:hover,
+  .closeBtn:focus {
+    background: #f2f2f2;
+  }
+
+  @keyframes sidebar-slide-in {
+    from { right: -400px; opacity: 0; }
+    to { right: 0; opacity: 1; }
+  }
+  .createGroupTitle {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .createGroupAvatarWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .createGroupAvatarBtn {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: #2196f3;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: background 0.2s, transform 0.1s ease-in-out;
+  }
+
+  .createGroupAvatarBtn:hover {
+    background: #1976d2;
+
+}
+  .createGroupAvatarBtn:hover .createGroupAvatarIcon {
+    transform: scale(1.13);
+  }
+
+  .createGroupAvatarImg {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .createGroupAvatarIcon {
+    color: #fff;
+    font-size: 49px;
+    transition: transform 0.18s;
+  }
+
+  .floatingInputWrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 18px;
+  }
+
+  .floatingLabel {
+    position: absolute;
+    left: 16px;
+    top: 13px;
+    color: #b3b3b3;
+    font-size: 16px;
+    pointer-events: none;
+    background: #fff;
+    padding: 0 4px;
+    transition: all 0.22s cubic-bezier(.4,0,.2,1);
+    z-index: 1;
+  }
+  .floatingLabelActive {
+    top: -11px;
+    left: 10px;
+    font-size: 13px;
+    color: #2196f3;
+    background: #fff;
+    padding: 0 4px;
+    z-index: 2000;
+  }
+  .createGroupInput {
+    position: relative;
+    width: 350px;
+    padding: 12px 16px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    outline: none;
+    font-weight: 500;
+    transition: border-color 0.1s, color 0.18s;
+  }
+  .createGroupInput:focus, .createGroupInput:focus-visible {
+    border-color: #2196f3;
+  }
+  .createGroupInput::placeholder {
+    color: #b3b3b3;
+    transition: color 0.18s;
+  }
+  .createGroupInput:focus::placeholder, .createGroupInput:focus-visible::placeholder {
+    color: #2196f3;
+  }
+  .createGroupInput:hover {
+    border-color: #2196f3;
+  }
+  .createGroupInput:hover::placeholder {
+    color: #2196f3;
+  }
+  .createGroupMembersCount {
+    font-size: 15px;
+    color: #888;
+    margin-bottom: 8px;
+    text-align: left;
+    width: 100%;
+  }
+  .createGroupMembersList {
+    width: 100%;
+    max-height: 455px;
+    overflow-y: auto;
+    margin-bottom: 18px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.18) transparent;
+  }
+  .createGroupMembersList::-webkit-scrollbar {
+    width: 5px;
+    background: #f9f9f9;
+  }
+  .createGroupMembersList::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 8px;
+    min-height: 40px;
+  }
+  .createGroupMembersList::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.28);
+  }
+  .createGroupMemberItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 9px;
+  }
+  .createGroupMemberAvatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .createGroupMemberName {
+    font-size: 15px;
+    font-weight: 500;
+    color: #222;
+  }
+
+  .createGroupBtnRow {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 18px;
+  }
+
+  .createGroupCreateBtn {
+    background: #2196f3;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .createGroupCreateBtn:disabled {
+    background: #b3e0fc;
+    color: #fff;
+    cursor: not-allowed;
+  }
+
+  .createGroupCreateBtn:hover:not(:disabled) {
+    background: #1976d2;
+  }
+
+  .createGroupCancelBtn {
+    background: #eaf6ff;
+    color: #0088cc;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+
+  .createGroupCancelBtn:hover {
+    background: #d0eaff;
+  }
+
+  .createGroupAvatarRemoveBtn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    color: #e53935;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 2;
+    transition: background 0.18s, color 0.18s;
+  }
+  .createGroupAvatarRemoveBtn:hover {
+    background: #ffeaea;
+    color: #b71c1c;
+  }
+  .createGroupAvatarWrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .createGroupTextarea {
+    width: 100%;
+    min-height: 70px;
+    max-height: 120px;
+    resize: none;
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    margin-bottom: 5px;
+    outline: none;
+    font-weight: 500;
+    transition: border-color 0.1s, color 0.18s;
+    color: #222;
+    background: #fff;
+  }
+  .createGroupTextarea:focus, .createGroupTextarea:focus-visible, .createGroupTextarea:hover {
+    border-color: #2196f3;
+  }
+  .createGroupTextarea::placeholder {
+    color: #b3b3b3;
+    transition: color 0.18s;
+  }
+  .createGroupTextarea:focus::placeholder, .createGroupTextarea:focus-visible::placeholder, .createGroupTextarea:hover::placeholder {
+    color: #2196f3;
+  }
+  .charCount {
+    position: absolute;
+    bottom: 2px;
+    right: 12px;
+    font-size: 12px;
+    color: #666;
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .error {
+    display: inline-block;
+    position: relative;
+    top: -6px;
+    left: 65px;
+    background-color: #fff1f0;
+    color: #cf1322;
+    border: 1px solid #ffa39e;
+    padding: 12px 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .createGroupBtnRowFixed {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+
+    padding: 5px 0 10px 0;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    border-top: 1px solid #f9f9f9;
+    z-index: 10;
+  }
+
+  .sidebarOpen {
+    right: 0;
+    opacity: 1;
+  }
+  .sidebarClosed {
+    right: -420px;
+    opacity: 0;
+  }

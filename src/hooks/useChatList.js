@@ -43,7 +43,8 @@ export function useChatList(user) {
           }));
 
           const userChats = allChats.filter(chat =>
-            chat.members?.includes(user.uid)
+            Array.isArray(chat.members) &&
+            chat.members.some(m => (typeof m === 'string' ? m === user.uid : (m.id || m.uid) === user.uid))
           );
 
           const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -102,16 +103,28 @@ export function useChatList(user) {
                 displayName = chat.name || 'Групповой чат';
                 photoURL = chat.photoURL || null;
                 
-                const groupMembers = chat.members.map(memberId => {
-                  const memberData = usersMap[memberId] || {};
-                  return {
-                    id: memberId,
-                    displayName: memberData.displayName || memberData.email || 'Участник',
-                    photoURL: memberData.photoURL,
-                    lastSeen: memberData.lastSeen || null,
-                    status: memberData.status,
-                    role: chat.ownerId === memberId ? 'owner' : (chat.admins?.includes(memberId) ? 'admin' : 'member')
-                  };
+                const groupMembers = chat.members.map(member => {
+                  if (typeof member === 'string') {
+                    const memberData = usersMap[member] || {};
+                    return {
+                      id: member,
+                      displayName: memberData.displayName || memberData.email || 'Участник',
+                      photoURL: memberData.photoURL,
+                      lastSeen: memberData.lastSeen || null,
+                      status: memberData.status,
+                      role: chat.ownerId === member ? 'owner' : (chat.admins?.includes(member) ? 'admin' : 'member')
+                    };
+                  } else {
+                    // member — это объект
+                    return {
+                      id: member.id,
+                      displayName: member.displayName || 'Участник',
+                      photoURL: member.photoURL,
+                      lastSeen: member.lastSeen || null,
+                      status: member.status,
+                      role: member.role || 'member'
+                    };
+                  }
                 });
                 
                 return {

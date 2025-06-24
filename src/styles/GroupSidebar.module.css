@@ -106,6 +106,8 @@
   font-size: 1.5rem;
   font-weight: 600;
   transform: translateY(7px);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .status {
@@ -330,14 +332,15 @@
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
   transform: scale(0);
-  animation: ripple 0.6s linear;
+  animation: ripple 0.5s linear;
+  background-color: rgba(0, 15, 22, 0.18);
   pointer-events: none;
+  z-index: 2;
 }
 @keyframes ripple {
   to {
-    transform: scale(4);
+    transform: scale(2.5);
     opacity: 0;
   }
 }
@@ -497,6 +500,7 @@
 .swapLeft {
   transform: translateX(-10px);
 }
+
 .snackbar {
   position: fixed;
   left: 50%;
@@ -523,4 +527,7 @@
   font-size: 1.3em;
   color: #fff;
   opacity: 0.8;
+}.memberCount {
+  font-size: 14px;
+  margin: 2px 0;
 }
