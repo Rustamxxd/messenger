@@ -77,7 +77,7 @@ export default function CreateGroupSidebar({ users, groupName, setGroupName, set
           {groupAvatarPreview ? (
             <img src={groupAvatarPreview} alt="avatar" className={styles.createGroupAvatarImg} />
           ) : (
-            <MdOutlineAddAPhoto className={styles.createGroupAvatarIcon} />
+            <img src="/assets/default-group.png" alt="avatar" className={styles.createGroupAvatarImg} />
           )}
         </button>
         {groupAvatarPreview && (
@@ -157,11 +157,11 @@ export default function CreateGroupSidebar({ users, groupName, setGroupName, set
             </div>
           ))}
         </div>
-      </form>
         <div className={styles.createGroupBtnRowFixed}>
           <button className={styles.createGroupCreateBtn} type="submit" disabled={!formik.values.name || users.length < 2}>Создать</button>
           <button className={styles.createGroupCancelBtn} type="button" onClick={handleClose}>Отмена</button>
         </div>
+      </form>
     </aside>
   );
 } 

@@ -29,7 +29,7 @@ export const registerUser = async (email, password, displayName) => {
     uid: user.uid,
     email: user.email,
     displayName,
-    photoURL: user.photoURL || "",
+    photoURL: user.photoURL || "/assets/default-avatar.png",
   });
 
   return user;
@@ -84,6 +84,16 @@ export const uploadAvatar = async (file) => {
   await uploadBytes(storageRef, file);
   const downloadURL = await getDownloadURL(storageRef);
 
+  return downloadURL;
+};
+
+export const uploadGroupAvatar = async (file, groupId) => {
+  if (!groupId) throw new Error("Не указан groupId для загрузки аватарки группы");
+  const fileExt = file.name.split(".").pop();
+  const filePath = `group_avatars/${groupId}.${fileExt}`;
+  const storageRef = ref(storage, filePath);
+  await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(storageRef);
   return downloadURL;
 };
 

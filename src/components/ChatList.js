@@ -15,7 +15,6 @@ import { RiFileMusicLine } from "react-icons/ri";
 import { MdDeleteOutline } from "react-icons/md";
 import { HiOutlinePlus } from 'react-icons/hi';
 import { Checkbox, Spin, Switch } from 'antd';
-import multiavatar from '@multiavatar/multiavatar';
 import UserAvatar from './UserAvatar';
 import { useTheme } from '@/hooks/useTheme';
 import { BsMoonStarsFill } from "react-icons/bs";
@@ -569,10 +568,7 @@ export default function ChatList({ onSelectChat }) {
                     {u.photoURL ? (
                       <img src={u.photoURL} alt="avatar" className={styles.avatar} />
                     ) : (
-                      <div
-                        className={styles.avatar}
-                        dangerouslySetInnerHTML={{ __html: multiavatar(u.displayName) }}
-                      />
+                      <img src="/assets/default-avatar.png" alt="avatar" className={styles.avatar} />
                     )}
                   </div>
                   <p className={styles.chatName}>{u.displayName || u.email}</p>
@@ -624,11 +620,10 @@ export default function ChatList({ onSelectChat }) {
                   <div>
                     {chat.photoURL ? (
                       <img src={chat.photoURL} alt="avatar" className={styles.avatar} />
+                    ) : chat.isGroup ? (
+                      <img src="/assets/default-group.png" alt="avatar" className={styles.avatar} />
                     ) : (
-                      <div
-                        className={styles.avatar}
-                        dangerouslySetInnerHTML={{ __html: multiavatar(chat.displayName) }}
-                      />
+                      <img src="/assets/default-avatar.png" alt="avatar" className={styles.avatar} />
                     )}
                   </div>
                   <div className={styles.chatContent}>

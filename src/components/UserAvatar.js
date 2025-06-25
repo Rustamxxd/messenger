@@ -1,30 +1,16 @@
 import React from "react";
-import multiavatar from "@multiavatar/multiavatar";
 
-const UserAvatar = ({ user, size = 45 }) => {
+const UserAvatar = ({ user, size = 45, className }) => {
+  const style = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    objectFit: 'cover',
+  };
   if (user?.photoURL) {
-    return (
-      <img
-        src={user.photoURL}
-        
-        style={{
-          width: size,
-          height: size,
-          borderRadius: "50%",
-          objectFit: "cover",
-        }}
-      />
-    );
+    return <img src={user.photoURL} alt="avatar" className={className} style={style} />;
   }
-
-  return (
-    <div
-      style={{ width: size, height: size }}
-      dangerouslySetInnerHTML={{
-        __html: multiavatar(user?.displayName || "Пользователь"),
-      }}
-    />
-  );
+  return <img src="/assets/default-avatar.png" alt="avatar" className={className} style={style} />;
 };
 
 export default UserAvatar;

@@ -37,8 +37,7 @@
     padding-bottom: 5px;
   }
   
-  .closeBtn:hover,
-  .closeBtn:focus {
+  .closeBtn:hover {
     background: #f2f2f2;
   }
 
@@ -238,6 +237,21 @@
     background: #d0eaff;
   }
 
+  .createGroupDeleteBtn {
+    background-color: #d11616;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .createGroupDeleteBtn:hover {
+    background: #97211d;
+  }
+
   .createGroupAvatarRemoveBtn {
     position: absolute;
     top: 6px;
@@ -340,4 +354,99 @@
   .sidebarClosed {
     right: -420px;
     opacity: 0;
+  }
+
+  .backBtn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    margin-right: 8px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #888;
+    cursor: pointer;
+    z-index: 1;
+    border-radius: 50%;
+    transition: background 0.2s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .backBtn:hover {
+    background: #f2f2f2;
+  }
+
+  .customModalOverlay {
+    position: fixed;
+    z-index: 3000;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.25s;
+  }
+  .modalOpen {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modalClosed {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .customModal {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 32px 28px 24px 28px;
+    min-width: 320px;
+    max-width: 90vw;
+    text-align: center;
+    transition: box-shadow 0.2s;
+  }
+  .modalHeader {
+    margin-bottom: 18px;
+  }
+  .modalTitle2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .modalDesc2 {
+    font-size: 1rem;
+    margin-bottom: 18px;
+  }
+  .modalBtnRow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .modalBtn2 {
+    font-size: 1rem;
+    padding: 10px 0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+  }
+  .modalBtnDanger2 {
+    background: #f43f5e;
+    color: #fff;
+    font-weight: 600;
+  }
+  .modalBtnDanger2:hover, .modalBtnDanger2:focus {
+    background: #dc2626;
+  }
+  .modalBtnCancel2 {
+    background: #eaf6ff;
+    color: #0088cc;
+    font-weight: 600;
+  }
+  .modalBtnCancel2:hover, .modalBtnCancel2:focus {
+    background: #d0eaff;
   }

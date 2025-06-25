@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import styles from "@/styles/ChatWindow.module.css";
-import MultiAvatar from "./UserAvatar";
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -16,22 +15,33 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
   useEffect(() => {
     setOtherUser(initialOtherUser);
     
-    if (!initialOtherUser?.uid) return;
-
-    const userRef = doc(db, 'users', initialOtherUser.uid);
-    const unsubscribe = onSnapshot(userRef, (doc) => {
-      if (doc.exists()) {
-        const userData = doc.data();
-        setOtherUser(prevUser => ({
-          ...prevUser,
-          ...userData,
-          lastSeen: userData.lastSeen
-        }));
-      }
-    });
-
-    return () => unsubscribe();
-  }, [initialOtherUser?.uid]);
+    let unsubscribe;
+    if (initialOtherUser?.isGroup && initialOtherUser?.id) {
+      const groupRef = doc(db, 'chats', initialOtherUser.id);
+      unsubscribe = onSnapshot(groupRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setOtherUser(prevUser => ({
+            ...prevUser,
+            ...docSnap.data(),
+            id: docSnap.id
+          }));
+        }
+      });
+    } else if (initialOtherUser?.uid) {
+      const userRef = doc(db, 'users', initialOtherUser.uid);
+      unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          setOtherUser(prevUser => ({
+            ...prevUser,
+            ...userData,
+            lastSeen: userData.lastSeen
+          }));
+        }
+      });
+    }
+    return () => unsubscribe && unsubscribe();
+  }, [initialOtherUser?.uid, initialOtherUser?.id, initialOtherUser?.isGroup]);
 
   let status = '';
   let statusClass = styles.userStatus;

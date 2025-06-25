@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@multiavatar/multiavatar": "^1.0.7",
     "@reduxjs/toolkit": "^2.6.1",
     "antd": "^4.24.16",
     "axios": "^1.8.3",

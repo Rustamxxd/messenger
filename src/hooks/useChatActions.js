@@ -122,6 +122,7 @@ export function useChatActions(user, onSelectChat) {
         photoURL,
         description: groupDescription || '',
         timestamp: serverTimestamp(),
+        ownerId: user.uid,
       });
       return true;
     } catch (error) {

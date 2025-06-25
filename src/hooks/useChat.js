@@ -70,9 +70,12 @@ export const useChat = (chatId) => {
   }, [chatId, user?.uid, optimisticMessages]);
 
   useEffect(() => {
-    const fetchChatInfo = async () => {
-      if (!chatId || !user?.uid) return;
+    if (!chatId || !user?.uid) return;
 
+    let unsubscribeGroup = null;
+    let didUnmount = false;
+
+    const fetchChatInfo = async () => {
       try {
         const chatDocRef = doc(db, 'chats', chatId);
         const chatDoc = await getDoc(chatDocRef);
@@ -83,18 +86,46 @@ export const useChat = (chatId) => {
         const isGroup = chatData.isGroup === true || participantIds.length > 2;
 
         if (isGroup) {
-          setOtherUser({
-            id: chatDoc.id,
-            displayName: chatData.name || 'Группа',
-            isGroup: true,
-            members: participantIds,
-            photoURL: chatData.photoURL || null
+          // Подписка на изменения группы
+          unsubscribeGroup = onSnapshot(chatDocRef, (docSnap) => {
+            if (!docSnap.exists()) return;
+            const chatData = docSnap.data();
+            let membersArr = [];
+            if (Array.isArray(chatData.members)) {
+              membersArr = chatData.members.map(m => {
+                if (typeof m === 'object') {
+                  return {
+                    id: m.id,
+                    displayName: m.displayName || 'Участник',
+                    photoURL: m.photoURL || null,
+                    role: m.role || (chatData.ownerId === m.id ? 'owner' : (chatData.admins?.includes(m.id) ? 'admin' : 'member'))
+                  };
+                } else {
+                  return {
+                    id: m,
+                    displayName: 'Участник',
+                    photoURL: null,
+                    role: chatData.ownerId === m ? 'owner' : (chatData.admins?.includes(m) ? 'admin' : 'member')
+                  };
+                }
+              });
+            }
+            if (!didUnmount) {
+              setOtherUser({
+                id: docSnap.id,
+                displayName: chatData.name || 'Группа',
+                isGroup: true,
+                members: membersArr,
+                photoURL: chatData.photoURL || null
+              });
+            }
           });
         } else {
+          // Обычный чат — однократное получение пользователя
           const otherId = participantIds.find((uid) => uid !== user.uid);
           if (otherId) {
             const otherSnap = await getDoc(doc(db, 'users', otherId));
-            setOtherUser(otherSnap.data());
+            if (!didUnmount) setOtherUser(otherSnap.data());
           }
         }
       } catch (err) {
@@ -103,6 +134,10 @@ export const useChat = (chatId) => {
     };
 
     fetchChatInfo();
+    return () => {
+      didUnmount = true;
+      if (unsubscribeGroup) unsubscribeGroup();
+    };
   }, [chatId, user?.uid]);
 
   useEffect(() => {

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/GroupSidebar.module.css';
 import { useRouter } from 'next/navigation';
-import { MdNotificationsNone, MdEdit, MdLink } from 'react-icons/md';
+import { MdNotificationsNone, MdOutlineModeEdit, MdLink } from 'react-icons/md';
 import { Switch } from 'antd';
 import MediaViewer from './MediaViewer';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { LuInfo } from "react-icons/lu";
 import LoadingDots from './LoadingDots';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import EditGroupSidebar from './EditGroupSidebar';
 
 function extractLinks(text) {
   if (!text) return [];
@@ -27,35 +30,6 @@ function getDomain(url) {
   }
 }
 
-function getMemberStatus(member, styles, typingUsers = []) {
-  let status = '';
-  let statusClass = styles.memberStatus;
-  let showDots = false;
-  
-  // Проверяем, печатает ли пользователь (typingUsers теперь массив строк с именами)
-  const isTyping = typingUsers.includes(member.displayName);
-  
-  if (isTyping) {
-    status = 'печатает';
-    statusClass += ' ' + styles.typingStatus;
-    showDots = true;
-  } else if (member?.lastSeen) {
-    // Правильно обрабатываем Firestore Timestamp
-    const lastSeen = member.lastSeen?.toDate ? member.lastSeen.toDate() : new Date(member.lastSeen);
-    const now = new Date();
-    const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
-    
-    if (diffMinutes < 1) {
-      status = 'в сети';
-      statusClass += ' ' + styles.online;
-    } else {
-      status = 'был(а) недавно';
-    }
-  }
-  
-  return { status, statusClass, showDots };
-}
-
 const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], typingUsers = [] }) => {
   const [tab, setTab] = useState('members');
   const [tabTransition, setTabTransition] = useState(false);
@@ -68,6 +42,10 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
   const [notifications, setNotifications] = useState(true);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [videoDurations, setVideoDurations] = useState({});
+  const [membersWithLastSeen, setMembersWithLastSeen] = useState([]);
+  const [editSidebarOpen, setEditSidebarOpen] = useState(false);
+  const [liveGroup, setLiveGroup] = useState(group);
+  const defaultGroupAvatar = "/assets/default-group.png";
 
   const handleLoadedMetadata = (i, e) => {
     setVideoDurations(prev => ({ ...prev, [i]: e.target.duration }));
@@ -128,9 +106,46 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
     }
   }, [tab, group?.id]);
 
-  if (!group) return null;
-  const isOwner = group.ownerId === currentUserId;
-  const defaultAvatar = "/assets/default-avatar.png";
+  useEffect(() => {
+    if (!group?.id) return;
+    const groupRef = doc(db, 'chats', group.id);
+    const unsubscribe = onSnapshot(groupRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setLiveGroup({ id: docSnap.id, ...docSnap.data() });
+      }
+    });
+    return () => unsubscribe();
+  }, [group?.id]);
+
+  useEffect(() => {
+    async function fetchMembersWithLastSeen() {
+      if (!liveGroup?.members || liveGroup.members.length === 0) {
+        setMembersWithLastSeen([]);
+        return;
+      }
+      const members = await Promise.all(
+        liveGroup.members.map(async (m) => {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', m.id));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            return {
+              ...m,
+              displayName: userData.displayName || m.displayName,
+              photoURL: userData.photoURL || m.photoURL || null,
+              lastSeen: userData.lastSeen || null,
+            };
+          } catch {
+            return { ...m, lastSeen: null };
+          }
+        })
+      );
+      setMembersWithLastSeen(members);
+    }
+    fetchMembersWithLastSeen();
+  }, [liveGroup?.members]);
+
+  if (!liveGroup) return null;
+  const isOwner = liveGroup.ownerId === currentUserId;
 
   const allMedia = allMessages.filter(m => 
     (m.fileType === 'image' || m.fileType === 'video') && 
@@ -163,10 +178,11 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
           <button className={styles.closeBtn} onClick={onClose}>×</button>
           <span className={styles.headerTitle}>Информация</span>
           {isOwner && (
-            <button onClick={() => router.push(`/groups/${group.id}/edit`)} className={styles.closeBtn} style={{marginLeft: 'auto', fontSize: 22}}>
-              <MdEdit />
+            <button className={styles.editGroup} onClick={() => setEditSidebarOpen(true)}>
+              <MdOutlineModeEdit />
             </button>
           )}
+          
         </div>
         
         <div 
@@ -174,27 +190,24 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
           ref={sidebarContentRef}
         >
           <div className={styles.avatarWrapper}>
-            <img src={group.photoURL || defaultAvatar} alt="avatar" className={styles.avatar} />
+            <img src={liveGroup.photoURL || defaultGroupAvatar} alt="avatar" className={styles.avatar} />
             <div className={styles.profileInfo}>
               <div
                 className={styles.displayName}
                 onClick={() => {
-                  if (group.name) {
-                    navigator.clipboard.writeText(group.name);
+                  if (liveGroup.name) {
+                    navigator.clipboard.writeText(liveGroup.name);
                     setShowSnackbar(true);
                     setTimeout(() => setShowSnackbar(false), 3000);
                   }
                 }}
                 
               >
-                {group.name || 'Группа'}
+                {liveGroup.name || 'Группа'}
               </div>
               <div className={styles.memberCount}>
-                {group.members?.length || 0} участник{group.members?.length === 1 ? '' : group.members?.length < 5 && group.members?.length > 1 ? 'а' : 'ов'}
+                {liveGroup.members?.length || 0} участник{liveGroup.members?.length === 1 ? '' : liveGroup.members?.length < 5 && liveGroup.members?.length > 1 ? 'а' : 'ов'}
               </div>
-              {group.description && (
-                <div className={styles.userStatus}>{group.description}</div>
-              )}
             </div>
           </div>
           
@@ -204,8 +217,8 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
               style={{ position: 'relative', cursor: 'pointer' }}
               title="Скопировать описание группы"
               onClick={e => {
-                if (group?.description) {
-                  navigator.clipboard.writeText(group.description);
+                if (liveGroup?.description) {
+                  navigator.clipboard.writeText(liveGroup.description);
                   setShowSnackbar(true);
                   setTimeout(() => setShowSnackbar(false), 3000);
                 }
@@ -223,11 +236,11 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
             >
               <span className={styles.menuIcon}><LuInfo /></span>
               <div className={styles.menuTextBlock}>
-                <span className={styles.menuMainText}>{group.description || '—'}</span>
+                <span className={styles.menuMainText}>{liveGroup.description || '—'}</span>
                 <span className={styles.menuSubText}>Информация</span>
               </div>
             </div>
-            {group.link && (
+            {liveGroup.link && (
               <div className={styles.menuItem}
                 style={{ position: 'relative', cursor: 'pointer' }}
                 onClick={e => {
@@ -245,7 +258,7 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
               >
                 <span className={styles.menuIcon}><MdLink /></span>
                 <div className={styles.menuTextBlock}>
-                  <a href={group.link} target="_blank" rel="noopener noreferrer" className={styles.menuMainText}>{group.link}</a>
+                  <a href={liveGroup.link} target="_blank" rel="noopener noreferrer" className={styles.menuMainText}>{liveGroup.link}</a>
                   <span className={styles.menuSubText}>Ссылка</span>
                 </div>
               </div>
@@ -269,9 +282,9 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
               <>
                 {tab === 'members' && (
                   <>
-                    {group.members?.length > 0 && (
+                    {membersWithLastSeen.length > 0 && (
                       <div className={styles.membersSection}>
-                        {group.members
+                        {membersWithLastSeen
                           .sort((a, b) => {
                             // Текущий пользователь всегда первый
                             if (a.id === currentUserId) return -1;
@@ -292,16 +305,34 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                             return a.displayName.localeCompare(b.displayName);
                           })
                           .map((member) => {
-                          const statusInfo = getMemberStatus(member, styles, typingUsers);
+                          let status = '';
+                          let statusClass = styles.memberStatus;
+                          const isTyping = typingUsers.includes(member.displayName);
+                          if (isTyping) {
+                            status = 'печатает';
+                            statusClass += ' ' + styles.typingStatus;
+                          } else if (member?.lastSeen) {
+                            const lastSeen = member.lastSeen?.toDate?.() || member.lastSeen;
+                            const now = new Date();
+                            const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
+                            if (diffMinutes < 1) {
+                              status = 'в сети';
+                              statusClass += ' ' + styles.online;
+                            } else {
+                              status = 'был(а) недавно';
+                            }
+                          }
                           return (
                             <div key={member.id} className={styles.memberItem}>
-                              <img src={member.photoURL || defaultAvatar} alt="avatar" className={styles.memberAvatar} />
+                              <img src={member.photoURL || defaultGroupAvatar} alt="avatar" className={styles.memberAvatar} />
                               <div className={styles.memberTextBlock}>
                                 <span className={styles.memberName}>{member.displayName}</span>
-                                <span className={statusInfo.statusClass}>
-                                  {statusInfo.status}
-                                  {statusInfo.showDots && <LoadingDots />}
-                                </span>
+                                {status && (
+                                  <span className={statusClass}>
+                                    {status}
+                                    {isTyping && <LoadingDots />}
+                                  </span>
+                                )}
                               </div>
                               <div style={{ marginLeft: 'auto' }}>
                                 <span className={styles.memberRole}>
@@ -314,7 +345,7 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                         })}
                       </div>
                     )}
-                    {(!group.members || group.members.length === 0) && (
+                    {(!membersWithLastSeen || membersWithLastSeen.length === 0) && (
                       <div className={styles.emptyTab}>Нет участников</div>
                     )}
                   </>
@@ -399,7 +430,7 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                   <div className={styles.voiceSection}>
                     {[...voices].reverse().map((m, i) => {
                       const isMe = m.sender === currentUserId;
-                      const senderName = isMe ? 'Вы' : (group.members?.find(u => u.id === m.sender)?.displayName || 'Участник');
+                      const senderName = isMe ? 'Вы' : (liveGroup.members?.find(u => u.id === m.sender)?.displayName || 'Участник');
                       const messageDate = m.timestamp?.toDate ? m.timestamp.toDate() : new Date();
 
                       return (
@@ -428,6 +459,12 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
           <LuInfo className={styles.snackbarIcon} />
           Скопировано в буфер обмена!
         </div>
+      )}
+      {editSidebarOpen && (
+        <EditGroupSidebar
+          group={liveGroup}
+          onClose={() => setEditSidebarOpen(false)}
+        />
       )}
     </>
   );

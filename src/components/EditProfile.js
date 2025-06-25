@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { signOut, deleteUser } from "firebase/auth";
+import { signOut, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 import { auth, db, uploadAvatar, updateUserProfile as updateFirebaseProfile } from "../lib/firebase";
 import { logout, updateUserProfile as updateReduxProfile } from "@/app/store/userSlice";
@@ -31,6 +31,9 @@ export default function EditProfile() {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [nameFocused, setNameFocused] = useState(false);
   const [aboutFocused, setAboutFocused] = useState(false);
+  const [avatarRemoved, setAvatarRemoved] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthError, setReauthError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -61,6 +64,8 @@ export default function EditProfile() {
 
         if (avatar) {
           avatarUrl = await uploadAvatar(avatar);
+        } else if (avatarRemoved) {
+          avatarUrl = '/assets/default-avatar.png';
         }
 
         await updateFirebaseProfile(user.uid, {
@@ -91,6 +96,7 @@ export default function EditProfile() {
     if (file) {
       setAvatar(file);
       setPreview(URL.createObjectURL(file));
+      setAvatarRemoved(false);
     }
   };
 
@@ -123,8 +129,12 @@ export default function EditProfile() {
   };
 
   const handleConfirmDelete = async () => {
+    setReauthError("");
     try {
       const userRef = doc(db, "users", user.uid);
+      const credential = EmailAuthProvider.credential(user.email, reauthPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+
       await deleteDoc(userRef);
       await deleteUser(auth.currentUser);
 
@@ -133,10 +143,15 @@ export default function EditProfile() {
 
       message.success("Аккаунт удалён");
     } catch (error) {
+      if (error.code === "auth/wrong-password") {
+        setReauthError("Неверный пароль");
+      } else {
+        setReauthError("Ошибка удаления: " + (error.message || error.code));
+      }
       console.error("Ошибка при удалении:", error);
-      message.error("Ошибка удаления. Возможно, нужно повторно войти.");
     } finally {
       setIsDeleteModalVisible(false);
+      setReauthPassword("");
     }
   };
 
@@ -152,7 +167,17 @@ export default function EditProfile() {
       <h1 className={styles.title}>Редактировать профиль</h1>
 
       <div className={styles.avatarWrapper}>
-        <img src={preview} alt="Avatar" className={styles.avatar} />
+        <img src={preview || '/assets/default-avatar.png'} alt="Avatar" className={styles.avatar} />
+        {preview && (
+          <button
+            type="button"
+            className={styles.avatarRemoveBtn}
+            onClick={e => { e.stopPropagation(); setAvatar(null); setPreview(null); setAvatarRemoved(true); }}
+            title="Убрать аватарку"
+          >
+            ×
+          </button>
+        )}
         <label className={styles.uploadLabel}>
           <FaCamera />
           Изменить фото
@@ -255,10 +280,14 @@ export default function EditProfile() {
         >
           <div className={styles.customModal}>
             <h2 className={styles.modalTitle}>Удалить аккаунт</h2>
-            <p className={styles.confirm}>
-              Вы уверены, что хотите удалить аккаунт? <br />
-              Это действие необратимо.
-            </p>
+            <input
+              type="password"
+              placeholder="Введите пароль для подтверждения"
+              value={reauthPassword}
+              onChange={e => setReauthPassword(e.target.value)}
+              className={styles.inputDeleteAcc}
+            />
+            {reauthError && <div className={styles.error}>{reauthError}</div>}
             <div className={styles.modalBtnRow}>
               <button className={styles.modalBtnDanger} onClick={handleConfirmDelete}>Удалить</button>
               <button className={styles.modalBtnCancel} onClick={handleCancelDelete}>Отмена</button>
