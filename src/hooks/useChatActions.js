@@ -102,6 +102,7 @@ export function useChatActions(user, onSelectChat) {
       if (groupAvatar) {
         photoURL = await uploadGroupAvatar(groupAvatar);
       }
+      const safeGroupName = groupName && groupName.trim() ? groupName.trim() : 'Групповой чат';
       const members = [
         {
           id: user.uid,
@@ -117,12 +118,13 @@ export function useChatActions(user, onSelectChat) {
         }))
       ];
       await addDoc(collection(db, 'chats'), {
-        name: groupName,
+        name: safeGroupName,
         members,
         photoURL,
         description: groupDescription || '',
         timestamp: serverTimestamp(),
         ownerId: user.uid,
+        isGroup: true,
       });
       return true;
     } catch (error) {

@@ -23,6 +23,9 @@ const Message = ({
   selected,
   onSelectMessage,
   multiSelectMode,
+  isGroup,
+  member,
+  onOpenProfile,
 }) => {
   const [editedText, setEditedText] = useState(message.text);
   const textareaRef = useRef(null);
@@ -82,6 +85,20 @@ const Message = ({
       id={`message-${message.id}`}
       className={`${styles.message} ${isOwn ? styles.own : ""}`}
     >
+      {isGroup && !isOwn && member && (
+        <span
+          className={styles.groupSenderName}
+          style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+          onClick={() => onOpenProfile && onOpenProfile(member.id)}
+        >
+          {member.displayName || 'Участник'}
+          {(member.role === 'owner' || member.role === 'moderator') && (
+            <span className={styles.groupSenderRole}>
+              {member.role === 'owner' ? 'Владелец' : 'Модератор'}
+            </span>
+          )}
+        </span>
+      )}
       <div className={styles.messageColumn}>
         {message.replyTo && (
           <div 
@@ -209,6 +226,9 @@ const Message = ({
           </div>
         </div>
       </div>
+      {isGroup && !isOwn && member && (
+        <img src={member.photoURL || '/assets/default-avatar.png'} alt="avatar" className={styles.groupSenderAvatarBottom} style={{cursor:'pointer'}} onClick={() => onOpenProfile && onOpenProfile(member.id)} />
+      )}
     </div>
   );
 };

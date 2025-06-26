@@ -523,10 +523,10 @@ export default function ChatList({ onSelectChat }) {
           groupDescription={groupDescription}
           setGroupDescription={setGroupDescription}
           onClose={() => setShowCreateGroupSidebar(false)}
-          onCreate={async (desc) => {
+          onCreate={async (name, desc) => {
             if (selectedUsers.length < 2) return;
-            const result = await createGroupChat(selectedUsers, groupName, groupAvatar, desc);
-            if (result) {
+            const createResult = await createGroupChat(selectedUsers, name, groupAvatar, desc);
+            if (createResult) {
               setShowCreateGroupSidebar(false);
               setMode(null);
               setSelectedUsers([]);
@@ -586,7 +586,7 @@ export default function ChatList({ onSelectChat }) {
           })}
         </div>
       ) : loading ? (
-        <Spin className={styles.loadingText} />
+        <Spin size="large" className={styles.loadingText} />
       ) : (
         <div className={styles.chatList}>
           {filteredChats.length > 0 ? (
@@ -761,9 +761,7 @@ export default function ChatList({ onSelectChat }) {
               {pendingChat?.photoURL ? (
                 <img src={pendingChat.photoURL} alt="avatar" className={styles.modalAvatarImg2} />
               ) : (
-                <div className={styles.modalAvatarBig}>
-                  {(pendingChat?.displayName || pendingChat?.name || 'G')[0].toUpperCase()}
-                </div>
+                <img src="/assets/default-group.png" alt="avatar" className={styles.modalAvatarImg2} />
               )}
                 <p className={styles.modalTitle2}>Покинуть группу</p>
               </div>
@@ -800,9 +798,7 @@ export default function ChatList({ onSelectChat }) {
               {pendingChat?.photoURL ? (
                 <img src={pendingChat.photoURL} alt="avatar" className={styles.modalAvatarImg2} />
               ) : (
-                <div className={styles.modalAvatarBig}>
-                  {(pendingChat?.displayName || pendingChat?.name || 'G')[0].toUpperCase()}
-                </div>
+                <img src="/assets/default-group.png" alt="avatar" className={styles.modalAvatarImg2} />
               )}
                 <p className={styles.modalTitle2}>Покинуть группу</p>
               </div>

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/ProfileSidebar.module.css';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { MdOutlineAlternateEmail, MdInfoOutline, MdNotificationsNone } from 'react-icons/md';
-import { Switch } from 'antd';
+import { MdOutlineAlternateEmail, MdInfoOutline } from 'react-icons/md';
 import MediaViewer from './MediaViewer';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { LuInfo } from "react-icons/lu";
@@ -28,7 +27,7 @@ function getDomain(url) {
   }
 }
 
-const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], allMessages = [], currentUserId, onScrollToMessage }) => {
+const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], allMessages = [], currentUserId, onScrollToMessage, onOpenMedia }) => {
   const [user, setUser] = useState(initialUser);
   const [tab, setTab] = useState('media');
   const messages = user?.messages || [];
@@ -121,19 +120,21 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     }
   }
 
-  const allMedia = (allMessages || []).filter(m => (m.fileType === 'image' || m.fileType === 'video') && !m.deleted);
+  const allMedia = (allMessages || []).filter(m => (m.fileType === 'image' || m.fileType === 'video') && !m.deleted && m.sender === user?.uid);
   const allLinks = (allMessages || []).filter(
     m =>
       (!m.fileType || m.fileType === 'text') &&
       extractLinks(m.text).length > 0 &&
       !m.deleted &&
-      !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
+      !(m.hiddenFor && m.hiddenFor.includes(currentUserId)) &&
+      m.sender === user?.uid
   );
   const voices = (allMessages || []).filter(
     m => 
       m.fileType === 'audio' && 
       !m.deleted && 
-      !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
+      !(m.hiddenFor && m.hiddenFor.includes(currentUserId)) &&
+      m.sender === user?.uid
   );
 
   // Автоскролл вниз при изменении вкладки или содержимого
@@ -144,6 +145,11 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
   }, [tab, allMedia.length, allLinks.length, voices.length]);
 
   const defaultAvatar = "/assets/default-avatar.png";
+
+  const handleOpenMedia = (mediaArr, i) => {
+    onClose && onClose();
+    onOpenMedia && setTimeout(() => onOpenMedia(mediaArr, i), 0);
+  };
 
   return (
     <>
@@ -221,12 +227,6 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
                 <span className={styles.menuSubText}>О себе</span>
               </div>
             </div>
-            <div className={styles.menuItem}>
-              <span className={styles.menuIcon}><MdNotificationsNone /></span>
-              <span className={styles.menuMainText} style={{color:'#222'}}>Уведомления</span>
-              <Switch defaultChecked style={{marginLeft:'auto'}} size="large"/>
-            </div>
-            
             <div className={styles.tabs}>
               <button className={tab === 'media' ? styles.activeTab : ''} onClick={() => setTab('media')}>Медиа</button>
               <button className={tab === 'links' ? styles.activeTab : ''} onClick={() => setTab('links')}>Ссылки</button>
@@ -244,14 +244,13 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
                       <div className={styles.mediaGrid}>
                         {[...allMedia].reverse().map((m, i) => {
                           const mediaArr = allMedia.map(med => ({ url: med.text, type: med.fileType }));
-                          const handleOpenMedia = () => setModalMedia({ files: mediaArr, initialIndex: allMedia.length - 1 - i });
                           return m.fileType === 'image' ? (
                             <img
                               key={i}
                               src={m.text}
                               alt="media"
                               className={styles.mediaThumb}
-                              onClick={handleOpenMedia}
+                              onClick={() => handleOpenMedia(mediaArr, allMedia.length - 1 - i)}
                             />
                           ) : (
                             <div key={i} className={styles.videoPreviewWrapper}>
@@ -261,7 +260,7 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
                                 muted
                                 preload="metadata"
                                 onLoadedMetadata={e => handleLoadedMetadata(i, e)}
-                                onClick={handleOpenMedia}
+                                onClick={() => handleOpenMedia(mediaArr, allMedia.length - 1 - i)}
                                 style={{ cursor: 'pointer' }}
                               />
                               {videoDurations[i] && (
@@ -297,7 +296,12 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
                             <div className={styles.menuTextBlock}>
                               <span
                                 className={styles.menuMainText}
-                                onClick={() => onScrollToMessage && onScrollToMessage(m.id)}
+                                onClick={() => {
+                                  if (onScrollToMessage) {
+                                    onClose && onClose();
+                                    setTimeout(() => onScrollToMessage(m.id), 0);
+                                  }
+                                }}
                                 style={{ cursor: 'pointer' }}
                               >
                                 {domain}

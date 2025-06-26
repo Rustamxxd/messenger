@@ -42,7 +42,7 @@ export default function CreateGroupSidebar({ users, groupName, setGroupName, set
     onSubmit: (values) => {
       setGroupName(values.name);
       setGroupDescription(values.description);
-      onCreate(values.description);
+      onCreate(values.name, values.description);
     },
   });
 

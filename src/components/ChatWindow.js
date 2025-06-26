@@ -43,11 +43,14 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [usersCache, setUsersCache] = useState({});
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [profileSidebarUser, setProfileSidebarUser] = useState(null);
+  const [globalMediaViewer, setGlobalMediaViewer] = useState(null);
 
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const user = useSelector((state) => state.user.user);
   const scrollPositionRef = useRef({});
+  const sendAudioRef = useRef(null);
 
   useOnlineStatus(user?.uid);
 
@@ -365,8 +368,14 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
     }
   }, [messages, onMessages]);
 
+  const handleSendMessage = async (...args) => {
+    sendAudioRef.current?.play?.();
+    await sendMessage(...args);
+  };
+
   return (
     <div className={styles.windowWrapper}>
+      <audio ref={sendAudioRef} src="/assets/sendMessage.mp3" preload="auto" />
       <div className={styles.chatMain}>
         <ChatHeader
           otherUser={otherUser}
@@ -374,7 +383,7 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
           onAvatarOrNameClick={onHeaderClick}
         />
         <MessageList
-          messages={filteredMessages}
+          messages={messages}
           userId={user?.uid}
           typingUsers={typingUsers}
           onContextMenu={handleContextMenu}
@@ -383,13 +392,19 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
           onDelete={handleDeleteMessage}
           onHide={handleHideMessage}
           setModalMedia={setModalMedia}
-          onUpdateMessage={(id, newText) => updateMessage(id, newText)}
+          onUpdateMessage={updateMessage}
           editingMessageId={editingMessageId}
           setEditingMessageId={setEditingMessageId}
           selectedMessage={selectedMessage}
           selectedMessages={selectedMessages}
           onSelectMessage={handleSelectMessage}
           multiSelectMode={multiSelectMode}
+          isGroup={otherUser?.isGroup}
+          members={otherUser?.members}
+          onOpenProfile={id => {
+            const member = otherUser?.members?.find(m => m.id === id);
+            if (member) setProfileSidebarUser({ ...member, uid: member.id });
+          }}
         />
 
         {modalMedia && (
@@ -416,7 +431,7 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
         <ChatInput
           newMessage={newMessage}
           setNewMessage={setNewMessage}
-          sendMessage={sendMessage}
+          sendMessage={handleSendMessage}
           handleInputChange={handleInputChange}
           showEmoji={showEmoji}
           setShowEmoji={setShowEmoji}
@@ -462,6 +477,24 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
             <LuInfo className={styles.snackbarIcon} />
             Скопировано в буфер обмена
           </div>
+        )}
+
+        <ProfileSidebar
+          open={!!profileSidebarUser}
+          user={profileSidebarUser}
+          allMessages={messages}
+          currentUserId={user?.uid}
+          onClose={() => setProfileSidebarUser(null)}
+          onScrollToMessage={handleScrollToMessage}
+          onOpenMedia={(files, initialIndex) => setGlobalMediaViewer({ files, initialIndex })}
+        />
+
+        {globalMediaViewer && (
+          <MediaViewer
+            files={globalMediaViewer.files}
+            initialIndex={globalMediaViewer.initialIndex}
+            onClose={() => setGlobalMediaViewer(null)}
+          />
         )}
 
         <div ref={messagesEndRef} />

@@ -11,19 +11,20 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
   const router = useRouter();
   const [otherUser, setOtherUser] = useState(initialOtherUser);
   const defaultAvatar = "/assets/default-avatar.png";
+  const defaultGroupAvatar = "/assets/default-group.png";
 
   useEffect(() => {
     setOtherUser(initialOtherUser);
-    
     let unsubscribe;
-    if (initialOtherUser?.isGroup && initialOtherUser?.id) {
+    if (initialOtherUser?.id) {
       const groupRef = doc(db, 'chats', initialOtherUser.id);
       unsubscribe = onSnapshot(groupRef, (docSnap) => {
         if (docSnap.exists()) {
           setOtherUser(prevUser => ({
             ...prevUser,
             ...docSnap.data(),
-            id: docSnap.id
+            id: docSnap.id,
+            displayName: docSnap.data().name || prevUser.displayName
           }));
         }
       });
@@ -41,7 +42,7 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
       });
     }
     return () => unsubscribe && unsubscribe();
-  }, [initialOtherUser?.uid, initialOtherUser?.id, initialOtherUser?.isGroup]);
+  }, [initialOtherUser?.id]);
 
   let status = '';
   let statusClass = styles.userStatus;
@@ -72,7 +73,7 @@ const ChatHeader = ({ otherUser: initialOtherUser, typingUsers = [], onAvatarOrN
       {displayUser?.isGroup ? (
         <>
           <img
-            src={displayUser?.photoURL || defaultAvatar}
+            src={displayUser?.photoURL || defaultGroupAvatar}
             alt="Avatar"
             className={styles.avatar}
             onClick={onAvatarOrNameClick}

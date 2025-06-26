@@ -517,3 +517,37 @@
   font-size: 14px;
   margin: 2px 0;
 }
+
+/* Floating Add User Button */
+.fabAddUser {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(33,150,243,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  z-index: 1100;
+  cursor: pointer;
+  transition: background 0.18s;
+  padding-left: 3px;
+}
+.fabAddUser:hover {
+  background: #1976d2;
+}
+@media (max-width: 600px) {
+  .fabAddUser {
+    right: 12px;
+    bottom: 12px;
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+  }
+}

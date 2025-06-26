@@ -37,3 +37,16 @@
       --right-column-width: 25vw;
   }
 }
+
+.highlighted {
+  animation: highlight 2s ease-out;
+  border-radius: 16px;
+}
+@keyframes highlight {
+  0% {
+    background-color: rgba(255, 255, 0, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}

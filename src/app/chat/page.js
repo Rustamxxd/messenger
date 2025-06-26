@@ -7,12 +7,15 @@ import styles from '@/styles/ChatPage.module.css';
 import GroupSidebar from '@/components/GroupSidebar';
 import ProfileSidebar from '@/components/ProfileSidebar';
 import { useSelector } from 'react-redux';
+import MediaViewer from '@/components/MediaViewer';
 
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [allMessages, setAllMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [mediaViewer, setMediaViewer] = useState(null);
+  const [profileSidebarUser, setProfileSidebarUser] = useState(null);
   const currentUserId = useSelector(state => state.user.user?.uid);
 
   useEffect(() => {
@@ -27,6 +30,20 @@ export default function ChatPage() {
 
   const handleHeaderClick = () => {
     setSidebarOpen(true);
+  };
+
+  const handleScrollToMessage = (messageId) => {
+    const el = document.getElementById(`message-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlighted');
+      setTimeout(() => el.classList.remove('highlighted'), 2000);
+    }
+  };
+
+  const handleOpenProfile = (user) => {
+    setSidebarOpen(false);
+    setTimeout(() => setProfileSidebarUser(user), 300);
   };
 
   return (
@@ -51,6 +68,9 @@ export default function ChatPage() {
                 currentUserId={currentUserId}
                 allMessages={allMessages}
                 typingUsers={typingUsers}
+                onScrollToMessage={handleScrollToMessage}
+                onOpenMedia={(files, initialIndex) => setMediaViewer({ files, initialIndex })}
+                onOpenProfile={handleOpenProfile}
               />
             ) : (
               <ProfileSidebar
@@ -60,6 +80,27 @@ export default function ChatPage() {
                 allMessages={allMessages}
                 currentUserId={currentUserId}
                 typingUsers={typingUsers}
+                onScrollToMessage={handleScrollToMessage}
+                onOpenMedia={(files, initialIndex) => setMediaViewer({ files, initialIndex })}
+              />
+            )}
+            {mediaViewer && (
+              <MediaViewer
+                files={mediaViewer.files}
+                initialIndex={mediaViewer.initialIndex}
+                onClose={() => setMediaViewer(null)}
+              />
+            )}
+            {profileSidebarUser && (
+              <ProfileSidebar
+                open={!!profileSidebarUser}
+                onClose={() => setProfileSidebarUser(null)}
+                user={profileSidebarUser}
+                allMessages={allMessages}
+                currentUserId={currentUserId}
+                typingUsers={typingUsers}
+                onScrollToMessage={handleScrollToMessage}
+                onOpenMedia={(files, initialIndex) => setMediaViewer({ files, initialIndex })}
               />
             )}
           </>

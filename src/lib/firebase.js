@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,7 +19,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-export { auth, db, storage };
+let messaging;
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  messaging = getMessaging(app);
+}
+
+export { auth, db, storage, messaging, getToken, onMessage };
 
 export const registerUser = async (email, password, displayName) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);

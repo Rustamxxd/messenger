@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import styles from "../styles/MediaViewer.module.css";
 import { IoIosArrowBack, IoIosArrowForward, IoMdClose } from "react-icons/io";
 import { FiDownload, FiZoomIn } from "react-icons/fi";
+import ReactDOM from 'react-dom';
 
 const MediaViewer = ({ files = [], initialIndex = 0, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -11,7 +12,7 @@ const MediaViewer = ({ files = [], initialIndex = 0, onClose }) => {
   const mediaRef = useRef(null);
 
   const currentFile = files[currentIndex];
-if (!currentFile) return null;
+  if (!currentFile) return null;
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Escape") onClose();
@@ -76,7 +77,7 @@ if (!currentFile) return null;
     setOffset({ x: 0, y: 0 });
   }, [currentIndex]);
 
-  return (
+  return ReactDOM.createPortal(
     <div className={styles.overlay}>
       <div className={styles.header}>
         <div className={styles.actions}>
@@ -141,7 +142,8 @@ if (!currentFile) return null;
           ) : null
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

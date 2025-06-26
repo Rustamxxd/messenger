@@ -19,6 +19,9 @@ const MessageList = ({
   selectedMessages,
   onSelectMessage,
   multiSelectMode,
+  members,
+  isGroup,
+  onOpenProfile,
 }) => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -86,6 +89,11 @@ const MessageList = ({
             });
           };
 
+          let member = null;
+          if (isGroup && Array.isArray(members)) {
+            member = members.find((m) => m.id === msg.sender);
+          }
+
           return (
             <React.Fragment key={msg.id}>
               {showDateDivider && (
@@ -113,6 +121,8 @@ const MessageList = ({
                 <Message
                   message={msg}
                   isOwn={msg.sender === userId}
+                  member={member}
+                  isGroup={isGroup}
                   onContextMenu={undefined}
                   onReply={() => onReply(msg)}
                   onReplyClick={() => onReplyClick(msg)}
@@ -130,6 +140,7 @@ const MessageList = ({
                   selected={selectedMessages && selectedMessages.includes(msg.id)}
                   onSelectMessage={onSelectMessage}
                   multiSelectMode={multiSelectMode}
+                  onOpenProfile={onOpenProfile}
                 />
               </div>
             </React.Fragment>

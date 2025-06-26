@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/GroupSidebar.module.css';
 import { useRouter } from 'next/navigation';
-import { MdNotificationsNone, MdOutlineModeEdit, MdLink } from 'react-icons/md';
+import { MdOutlineModeEdit, MdLink, MdPersonAddAlt1 } from 'react-icons/md';
 import { Switch } from 'antd';
 import MediaViewer from './MediaViewer';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { LuInfo } from "react-icons/lu";
 import LoadingDots from './LoadingDots';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import EditGroupSidebar from './EditGroupSidebar';
+import UserSelectSidebar from './UserSelectSidebar';
+import { useUsers } from '@/hooks/useUsers';
+import { useSelector } from 'react-redux';
 
 function extractLinks(text) {
   if (!text) return [];
@@ -30,7 +33,7 @@ function getDomain(url) {
   }
 }
 
-const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], typingUsers = [] }) => {
+const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], typingUsers = [], onScrollToMessage, onOpenMedia, onOpenProfile }) => {
   const [tab, setTab] = useState('members');
   const [tabTransition, setTabTransition] = useState(false);
   const [swapDirection, setSwapDirection] = useState('right');
@@ -39,13 +42,15 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
   const [modalMedia, setModalMedia] = useState(null);
   const sidebarContentRef = useRef(null);
   const router = useRouter();
-  const [notifications, setNotifications] = useState(true);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [videoDurations, setVideoDurations] = useState({});
   const [membersWithLastSeen, setMembersWithLastSeen] = useState([]);
   const [editSidebarOpen, setEditSidebarOpen] = useState(false);
   const [liveGroup, setLiveGroup] = useState(group);
   const defaultGroupAvatar = "/assets/default-group.png";
+  const [showAddUserSidebar, setShowAddUserSidebar] = useState(false);
+  const { users, loadUsers, loading: usersLoading } = useUsers({ uid: currentUserId });
+  const user = useSelector((state) => state.user.user);
 
   const handleLoadedMetadata = (i, e) => {
     setVideoDurations(prev => ({ ...prev, [i]: e.target.duration }));
@@ -145,7 +150,9 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
   }, [liveGroup?.members]);
 
   if (!liveGroup) return null;
-  const isOwner = liveGroup.ownerId === currentUserId;
+  const currentUser = liveGroup.members?.find(m => m.id === currentUserId);
+  const isOwner = currentUser?.role === 'owner';
+  const isModerator = currentUser?.role === 'moderator';
 
   const allMedia = allMessages.filter(m => 
     (m.fileType === 'image' || m.fileType === 'video') && 
@@ -170,6 +177,35 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
     !(m.hiddenFor && m.hiddenFor.includes(currentUserId))
   );
 
+  // Открыть сайдбар выбора пользователей
+  const handleOpenAddUser = () => {
+    loadUsers();
+    setShowAddUserSidebar(true);
+  };
+  // Добавить выбранных пользователей в группу
+  const handleAddUsers = async (selectedUsers) => {
+    const groupRef = doc(db, 'chats', group.id);
+    const groupSnap = await getDoc(groupRef);
+    const groupData = groupSnap.data();
+    // Добавляем только новых
+    const existingIds = groupData.members.map(m => m.id);
+    const newMembers = selectedUsers.filter(u => !existingIds.includes(u.uid)).map(u => ({
+      id: u.uid,
+      displayName: u.displayName,
+      photoURL: u.photoURL || null,
+      role: 'member',
+    }));
+    if (newMembers.length > 0) {
+      await updateDoc(groupRef, { members: [...groupData.members, ...newMembers] });
+    }
+    setShowAddUserSidebar(false);
+  };
+
+  const handleOpenMedia = (mediaArr, i) => {
+    onClose && onClose();
+    setTimeout(() => setModalMedia({ files: mediaArr, initialIndex: i }), 0);
+  };
+
   return (
     <>
       <div className={styles.overlay + (open ? ' ' + styles.open : '')} onClick={onClose} />
@@ -177,14 +213,12 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
         <div className={styles.header}>
           <button className={styles.closeBtn} onClick={onClose}>×</button>
           <span className={styles.headerTitle}>Информация</span>
-          {isOwner && (
+          {(isOwner || isModerator) && (
             <button className={styles.editGroup} onClick={() => setEditSidebarOpen(true)}>
               <MdOutlineModeEdit />
             </button>
           )}
-          
         </div>
-        
         <div 
           className={styles.sidebarContent}
           ref={sidebarContentRef}
@@ -201,7 +235,6 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                     setTimeout(() => setShowSnackbar(false), 3000);
                   }
                 }}
-                
               >
                 {liveGroup.name || 'Группа'}
               </div>
@@ -263,11 +296,6 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                 </div>
               </div>
             )}
-            <div className={styles.menuItem}>
-              <span className={styles.menuIcon}><MdNotificationsNone /></span>
-              <span className={styles.menuMainText} style={{color:'#222'}}>Уведомления</span>
-              <Switch checked={notifications} onChange={setNotifications} style={{marginLeft:'auto'}} size="large"/>
-            </div>
             
             <div className={styles.tabs}>
               <button className={tab === 'members' ? styles.activeTab : ''} onClick={() => setTab('members')}>Участники</button>
@@ -324,9 +352,21 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                           }
                           return (
                             <div key={member.id} className={styles.memberItem}>
-                              <img src={member.photoURL || defaultGroupAvatar} alt="avatar" className={styles.memberAvatar} />
+                              <img
+                                src={member.photoURL || defaultGroupAvatar}
+                                alt="avatar"
+                                className={styles.memberAvatar}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => onOpenProfile && onOpenProfile({ ...member, uid: member.id })}
+                              />
                               <div className={styles.memberTextBlock}>
-                                <span className={styles.memberName}>{member.displayName}</span>
+                                <span
+                                  className={styles.memberName}
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => onOpenProfile && onOpenProfile({ ...member, uid: member.id })}
+                                >
+                                  {member.displayName}
+                                </span>
                                 {status && (
                                   <span className={statusClass}>
                                     {status}
@@ -335,9 +375,9 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                                 )}
                               </div>
                               <div style={{ marginLeft: 'auto' }}>
-                                <span className={styles.memberRole}>
+                                <span className={styles.memberRole} style={member.role === 'owner' ? { color: '#2196f3' } : member.role === 'moderator' ? { color: '#2196f3' } : {}}>
                                   {member.role === 'owner' ? 'Владелец' : 
-                                   member.role === 'admin' ? 'Админ' : 'Участник'}
+                                   member.role === 'moderator' ? 'Модератор' : 'Участник'}
                                 </span>
                               </div>
                             </div>
@@ -357,14 +397,13 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                       <div className={styles.mediaGrid}>
                         {[...allMedia].reverse().map((m, i) => {
                           const mediaArr = allMedia.map(med => ({ url: med.text, type: med.fileType }));
-                          const handleOpenMedia = () => setModalMedia({ files: mediaArr, initialIndex: allMedia.length - 1 - i });
                           return m.fileType === 'image' ? (
                             <img
                               key={i}
                               src={m.text}
                               alt="media"
                               className={styles.mediaThumb}
-                              onClick={handleOpenMedia}
+                              onClick={() => handleOpenMedia(mediaArr, allMedia.length - 1 - i)}
                             />
                           ) : (
                             <div key={i} className={styles.videoPreviewWrapper}>
@@ -374,7 +413,7 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                                 muted
                                 preload="metadata"
                                 onLoadedMetadata={e => handleLoadedMetadata(i, e)}
-                                onClick={handleOpenMedia}
+                                onClick={() => handleOpenMedia(mediaArr, allMedia.length - 1 - i)}
                                 style={{ cursor: 'pointer' }}
                               />
                               {videoDurations[i] && (
@@ -400,26 +439,39 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
                 
                 {tab === 'links' && allLinks.length > 0 && (
                   <div className={styles.linksSection}>
-                    {[...allLinks].reverse().map((m, i) => {
-                      const links = extractLinks(m.text);
-                      return links.map((url, j) => {
+                    {[...allLinks].reverse().map((m, i) => (
+                      extractLinks(m.text).map((url, j) => {
                         const domain = getDomain(url);
-                        const firstLetter = domain.charAt(0).toUpperCase();
+                        const firstLetter = domain[0]?.toUpperCase() || '';
                         return (
-                          <div key={`${i}-${j}`} className={styles.linkMenuItem}>
-                            <div className={styles.linkAvatarLarge}>
-                              <span>{firstLetter}</span>
-                            </div>
+                          <div key={j} className={styles.linkMenuItem}>
+                            <span className={styles.linkAvatarLarge}>{firstLetter}</span>
                             <div className={styles.menuTextBlock}>
-                              <span className={styles.menuMainText}>{domain}</span>
-                              <a href={url} target="_blank" rel="noopener noreferrer" className={styles.linkUrl}>
-                                {url}
+                              <span
+                                className={styles.menuMainText}
+                                onClick={() => {
+                                  if (onScrollToMessage) {
+                                    onClose && onClose();
+                                    setTimeout(() => onScrollToMessage(m.id), 0);
+                                  }
+                                }}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                {domain}
+                              </span>
+                              <a
+                                href={url.replace(/^@/, '').replace(/^https?:\/\//, 'https://')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.linkUrl}
+                              >
+                                {url.replace(/^@/, '')}
                               </a>
                             </div>
                           </div>
                         );
-                      });
-                    })}
+                      })
+                    ))}
                   </div>
                 )}
                 {tab === 'links' && allLinks.length === 0 && (
@@ -453,6 +505,26 @@ const GroupSidebar = ({ open, onClose, group, currentUserId, allMessages = [], t
             )}
           </div>
         </div>
+        {/* Floating Add User Button strictly inside sidebar */}
+        {(isOwner || isModerator) && (
+          <button
+            className={styles.fabAddUser}
+            title="Добавить участника"
+            onClick={handleOpenAddUser}
+          >
+            <MdPersonAddAlt1 size={27}/>
+          </button>
+        )}
+        {showAddUserSidebar && (
+          <UserSelectSidebar
+            open={showAddUserSidebar}
+            onClose={() => setShowAddUserSidebar(false)}
+            users={users}
+            loading={usersLoading}
+            onSelect={handleAddUsers}
+            existingIds={liveGroup.members.map(m => m.id)}
+          />
+        )}
       </aside>
       {showSnackbar && (
         <div className={styles.snackbar}>
