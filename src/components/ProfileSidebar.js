@@ -27,7 +27,7 @@ function getDomain(url) {
   }
 }
 
-const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], allMessages = [], currentUserId, onScrollToMessage, onOpenMedia }) => {
+const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], allMessages = [], currentUserId, onScrollToMessage, onOpenMedia, isGroupContext = false }) => {
   const [user, setUser] = useState(initialUser);
   const [tab, setTab] = useState('media');
   const messages = user?.messages || [];
@@ -120,7 +120,16 @@ const ProfileSidebar = ({ open, onClose, user: initialUser, typingUsers = [], al
     }
   }
 
-  const allMedia = (allMessages || []).filter(m => (m.fileType === 'image' || m.fileType === 'video') && !m.deleted && m.sender === user?.uid);
+  const allMedia = (allMessages || []).filter(m => {
+    const isMedia = (m.fileType === 'image' || m.fileType === 'video') && !m.deleted;
+    if (isGroupContext) {
+      // В групповом контексте показываем только медиа от конкретного пользователя
+      return isMedia && m.sender === user?.uid;
+    } else {
+      // В личном чате показываем все медиа
+      return isMedia;
+    }
+  });
   const allLinks = (allMessages || []).filter(
     m =>
       (!m.fileType || m.fileType === 'text') &&

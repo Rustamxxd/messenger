@@ -487,6 +487,7 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
           onClose={() => setProfileSidebarUser(null)}
           onScrollToMessage={handleScrollToMessage}
           onOpenMedia={(files, initialIndex) => setGlobalMediaViewer({ files, initialIndex })}
+          isGroupContext={true}
         />
 
         {globalMediaViewer && (

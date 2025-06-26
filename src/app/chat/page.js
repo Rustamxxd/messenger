@@ -82,6 +82,7 @@ export default function ChatPage() {
                 typingUsers={typingUsers}
                 onScrollToMessage={handleScrollToMessage}
                 onOpenMedia={(files, initialIndex) => setMediaViewer({ files, initialIndex })}
+                isGroupContext={false}
               />
             )}
             {mediaViewer && (
@@ -101,6 +102,7 @@ export default function ChatPage() {
                 typingUsers={typingUsers}
                 onScrollToMessage={handleScrollToMessage}
                 onOpenMedia={(files, initialIndex) => setMediaViewer({ files, initialIndex })}
+                isGroupContext={true}
               />
             )}
           </>
