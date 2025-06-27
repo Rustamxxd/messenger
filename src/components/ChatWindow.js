@@ -383,7 +383,7 @@ const ChatWindow = ({ chatId, onHeaderClick, onMessages, onTypingUsers }) => {
           onAvatarOrNameClick={onHeaderClick}
         />
         <MessageList
-          messages={messages}
+          messages={filteredMessages}
           userId={user?.uid}
           typingUsers={typingUsers}
           onContextMenu={handleContextMenu}
